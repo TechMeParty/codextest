@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Star Hopper 3D</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="hud">
+      <h1>Star Hopper 3D</h1>
+      <p>矢印キーか WASD で移動、スペースでジャンプ。制限時間内に光るオーブをできるだけ多く集めよう！</p>
+      <div class="stats">
+        <span>スコア: <span id="score">0</span></span>
+        <span>残り時間: <span id="time">60</span>s</span>
+      </div>
+      <p id="status" class="hidden"></p>
+      <p class="hint">ゲームをリスタートするには Enter を押してください。</p>
+    </div>
+    <canvas id="game"></canvas>
+    <script type="module" src="main.js"></script>
+  </body>
+</html>
