@@ -2,22 +2,1110 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Star Hopper 3D</title>
-    <link rel="stylesheet" href="styles.css" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>南米ストリートサッカー：Dream Run</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", system-ui,
+          -apple-system, BlinkMacSystemFont, sans-serif;
+        background: radial-gradient(circle at 20% 20%, #032026, #01090d 60%);
+        color: #f7fbff;
+        overflow: hidden;
+        user-select: none;
+        touch-action: manipulation;
+      }
+
+      #app {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+        background: radial-gradient(circle at 50% 20%, #063b2e, #041c17 70%);
+      }
+
+      .hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      #hud {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: space-between;
+        padding: clamp(12px, 4vw, 32px);
+        gap: 16px;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+      }
+
+      #hud .card {
+        background: rgba(1, 15, 17, 0.55);
+        border: 1px solid rgba(119, 254, 255, 0.24);
+        padding: clamp(10px, 2.2vw, 16px) clamp(14px, 3vw, 22px);
+        border-radius: 16px;
+        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25);
+        min-width: 0;
+        backdrop-filter: blur(8px);
+      }
+
+      #hud .card strong {
+        font-size: clamp(14px, 3.2vw, 18px);
+        letter-spacing: 0.08em;
+      }
+
+      #hud .card span {
+        display: block;
+        font-size: clamp(12px, 3vw, 16px);
+        opacity: 0.86;
+        margin-top: 4px;
+      }
+
+      #progress {
+        margin-top: 10px;
+        width: clamp(140px, 40vw, 320px);
+        height: 9px;
+        background: rgba(255, 255, 255, 0.14);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+
+      #progress-fill {
+        width: 0%;
+        height: 100%;
+        background: linear-gradient(90deg, #2dfdce, #23a2ff);
+        transition: width 0.2s ease;
+      }
+
+      .overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: clamp(20px, 6vw, 48px);
+        background: rgba(2, 10, 12, 0.78);
+        backdrop-filter: blur(10px);
+        transition: opacity 0.4s ease;
+      }
+
+      #menu h1 {
+        font-size: clamp(24px, 6vw, 42px);
+        line-height: 1.2;
+        margin-bottom: clamp(12px, 3vw, 20px);
+        text-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+      }
+
+      #menu p {
+        font-size: clamp(15px, 4vw, 18px);
+        line-height: 1.7;
+        max-width: 620px;
+        margin: 0 auto clamp(28px, 7vw, 36px);
+        color: rgba(241, 248, 255, 0.92);
+      }
+
+      .difficulty-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: clamp(12px, 3vw, 18px);
+        width: min(420px, 100%);
+      }
+
+      .difficulty-buttons button {
+        background: linear-gradient(135deg, rgba(7, 25, 32, 0.9), rgba(6, 65, 67, 0.92));
+        border: 1px solid rgba(122, 244, 255, 0.28);
+        border-radius: 20px;
+        padding: clamp(16px, 4vw, 22px);
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        color: #e1fbff;
+        font-size: clamp(15px, 4vw, 18px);
+        font-weight: 600;
+        gap: 6px;
+        box-shadow: 0 18px 32px rgba(0, 0, 0, 0.35);
+        transition: transform 0.15s ease, box-shadow 0.2s ease;
+      }
+
+      .difficulty-buttons button:active {
+        transform: scale(0.97);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.32);
+      }
+
+      .difficulty-buttons button .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+      }
+
+      .difficulty-buttons .price {
+        font-size: clamp(22px, 6vw, 30px);
+        font-weight: 800;
+        letter-spacing: 0.02em;
+      }
+
+      .difficulty-buttons .name {
+        font-size: clamp(16px, 5vw, 20px);
+        letter-spacing: 0.18em;
+        opacity: 0.92;
+      }
+
+      .badge {
+        align-self: flex-end;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: clamp(12px, 3.6vw, 14px);
+        letter-spacing: 0.06em;
+        font-weight: 500;
+      }
+
+      .badge.bad {
+        background: rgba(255, 82, 82, 0.16);
+        color: #ff9f9f;
+        border: 1px solid rgba(255, 98, 98, 0.4);
+      }
+
+      .badge.mid {
+        background: rgba(255, 214, 94, 0.16);
+        color: #ffe9a3;
+        border: 1px solid rgba(255, 214, 94, 0.42);
+      }
+
+      .badge.good {
+        background: rgba(110, 255, 205, 0.18);
+        color: #afffe1;
+        border: 1px solid rgba(138, 255, 220, 0.42);
+      }
+
+      #message h2 {
+        font-size: clamp(26px, 7vw, 38px);
+        margin-bottom: 12px;
+      }
+
+      #message p {
+        font-size: clamp(15px, 4vw, 18px);
+        line-height: 1.7;
+        max-width: min(520px, 90vw);
+        margin: 0 auto;
+      }
+
+      #message button {
+        margin-top: clamp(18px, 4vw, 24px);
+        width: min(320px, 88vw);
+      }
+
+      button.secondary {
+        background: rgba(6, 30, 36, 0.8);
+        border: 1px solid rgba(144, 236, 255, 0.32);
+        color: #b8f5ff;
+      }
+
+      button {
+        border: none;
+        cursor: pointer;
+      }
+
+      #joystick {
+        position: absolute;
+        bottom: clamp(20px, 7vh, 48px);
+        left: clamp(18px, 8vw, 52px);
+        width: clamp(120px, 28vw, 168px);
+        aspect-ratio: 1 / 1;
+        border-radius: 50%;
+        border: 2px solid rgba(144, 247, 255, 0.25);
+        background: rgba(0, 13, 18, 0.55);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 18px 36px rgba(0, 0, 0, 0.35);
+        touch-action: none;
+        transition: opacity 0.25s ease;
+      }
+
+      #joystick.active {
+        border-color: rgba(144, 247, 255, 0.6);
+      }
+
+      #joystick .ring {
+        position: absolute;
+        width: 70%;
+        height: 70%;
+        border: 1.6px dashed rgba(180, 255, 255, 0.35);
+        border-radius: 50%;
+      }
+
+      #joystick-stick {
+        width: 38%;
+        height: 38%;
+        border-radius: 50%;
+        background: rgba(111, 255, 220, 0.82);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+        transform: translate(0, 0);
+        transition: transform 0.12s ease;
+      }
+
+      @media (min-width: 860px) {
+        #hud {
+          padding: 26px 40px;
+        }
+
+        #joystick {
+          left: clamp(30px, 10vw, 88px);
+          width: clamp(120px, 18vw, 180px);
+        }
+
+        body {
+          font-size: 16px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="hud">
-      <h1>Star Hopper 3D</h1>
-      <p>矢印キーか WASD で移動、スペースでジャンプ。制限時間内に光るオーブをできるだけ多く集めよう！</p>
-      <div class="stats">
-        <span>スコア: <span id="score">0</span></span>
-        <span>残り時間: <span id="time">60</span>s</span>
+    <div id="app">
+      <canvas id="gameCanvas"></canvas>
+
+      <div id="hud" class="hidden">
+        <div class="card">
+          <strong id="difficulty-label">EASY</strong>
+          <span id="price-label">難易度を選択してください</span>
+        </div>
+        <div class="card">
+          <strong>経過 <span id="time-label">0.0</span>s</strong>
+          <div id="progress">
+            <div id="progress-fill"></div>
+          </div>
+        </div>
       </div>
-      <p id="status" class="hidden"></p>
-      <p class="hint">ゲームをリスタートするには Enter を押してください。</p>
+
+      <div id="joystick" class="hidden">
+        <div class="ring"></div>
+        <div id="joystick-stick"></div>
+      </div>
+
+      <div id="menu" class="overlay">
+        <h1>南米ストリートサッカー：Dream Run</h1>
+        <p>
+          左の裏路地からスタートして、一番右のゴールに叩き込め！支払う金額で難易度が激変。
+          指でドラッグしてドリブルし、襲いかかるスライディングをかわそう。
+        </p>
+        <div class="difficulty-buttons">
+          <button data-difficulty="hard">
+            <div class="row">
+              <span class="price">$0</span>
+              <span class="name">HARD</span>
+            </div>
+            <span class="badge bad">容赦なし、ぶつかったら即 Game Over</span>
+          </button>
+          <button data-difficulty="normal">
+            <div class="row">
+              <span class="price">$10</span>
+              <span class="name">NORMAL</span>
+            </div>
+            <span class="badge mid">そこそこ手加減、読み合いの中盤</span>
+          </button>
+          <button data-difficulty="easy">
+            <div class="row">
+              <span class="price">$100</span>
+              <span class="name">EASY</span>
+            </div>
+            <span class="badge good">VIP待遇、当たった相手が吹っ飛ぶ！</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="message" class="overlay hidden">
+        <h2 id="message-title">GOOOOL!!!</h2>
+        <p id="message-text"></p>
+        <button id="retry">同じ難易度でリトライ</button>
+        <button id="back-to-menu" class="secondary">難易度選択に戻る</button>
+      </div>
     </div>
-    <canvas id="game"></canvas>
-    <script type="module" src="main.js"></script>
+
+    <script>
+      (() => {
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const hud = document.getElementById("hud");
+        const menu = document.getElementById("menu");
+        const message = document.getElementById("message");
+        const messageTitle = document.getElementById("message-title");
+        const messageText = document.getElementById("message-text");
+        const difficultyLabel = document.getElementById("difficulty-label");
+        const priceLabel = document.getElementById("price-label");
+        const timeLabel = document.getElementById("time-label");
+        const progressFill = document.getElementById("progress-fill");
+        const joystick = document.getElementById("joystick");
+        const joystickStick = document.getElementById("joystick-stick");
+        const retryButton = document.getElementById("retry");
+        const backButton = document.getElementById("back-to-menu");
+        const difficultyButtons = document.querySelectorAll(
+          "[data-difficulty]"
+        );
+
+        const DPR = window.devicePixelRatio || 1;
+        const field = { width: 960, height: 540 };
+        const startX = 80;
+        const player = { x: startX, y: field.height / 2, radius: 18, speed: 250 };
+        const goal = { start: field.width - 120, width: 84 };
+        let goalGlow = 0;
+        let visualTime = 0;
+
+        const difficulties = {
+          hard: {
+            key: "hard",
+            price: "$0",
+            name: "HARD",
+            description: "コンクリートを滑る削り合い。ぶつかった瞬間 Game Over。",
+            baseSpeed: 320,
+            chaseResponse: 6.6,
+            spawn: [0.6, 1.05],
+            slideBoost: 1.85,
+            slideCooldown: [0.7, 1.2],
+            tint: "#ff6565",
+            bounce: false,
+          },
+          normal: {
+            key: "normal",
+            price: "$10",
+            name: "NORMAL",
+            description: "路地裏コートの真剣勝負。読み合いで突破せよ。",
+            baseSpeed: 240,
+            chaseResponse: 5,
+            spawn: [1.0, 1.6],
+            slideBoost: 1.45,
+            slideCooldown: [1.1, 1.8],
+            tint: "#ffd966",
+            bounce: false,
+          },
+          easy: {
+            key: "easy",
+            price: "$100",
+            name: "EASY",
+            description: "VIP待遇！ぶつかった相手が吹っ飛ぶご褒美難易度。",
+            baseSpeed: 170,
+            chaseResponse: 3.4,
+            spawn: [1.2, 1.9],
+            slideBoost: 1.12,
+            slideCooldown: [1.4, 2.3],
+            tint: "#78fbc9",
+            bounce: true,
+          },
+        };
+
+        let currentDifficulty = null;
+        let opponents = [];
+        let spawnTimer = 0;
+        let elapsedTime = 0;
+        let lastTimestamp = 0;
+        let state = "menu";
+        let joystickVector = { x: 0, y: 0 };
+        let keys = {};
+        let keyVector = { x: 0, y: 0 };
+        let pointerId = null;
+
+        function resizeCanvas() {
+          const width = window.innerWidth;
+          const height = window.innerHeight;
+          canvas.style.width = `${width}px`;
+          canvas.style.height = `${height}px`;
+          canvas.width = Math.round(width * DPR);
+          canvas.height = Math.round(height * DPR);
+        }
+
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas();
+
+        function clamp(value, min, max) {
+          return Math.min(max, Math.max(min, value));
+        }
+
+        function randomRange(min, max) {
+          return Math.random() * (max - min) + min;
+        }
+
+        function resetPlayerPosition() {
+          player.x = startX;
+          player.y = field.height / 2;
+        }
+
+        function updateKeyVector() {
+          keyVector.x =
+            (keys["ArrowRight"] || keys["KeyD"] ? 1 : 0) -
+            (keys["ArrowLeft"] || keys["KeyA"] ? 1 : 0);
+          keyVector.y =
+            (keys["ArrowDown"] || keys["KeyS"] ? 1 : 0) -
+            (keys["ArrowUp"] || keys["KeyW"] ? 1 : 0);
+          if (keyVector.x || keyVector.y) {
+            const length = Math.hypot(keyVector.x, keyVector.y);
+            keyVector.x /= length;
+            keyVector.y /= length;
+          }
+        }
+
+        const controlKeys = new Set([
+          "ArrowUp",
+          "ArrowDown",
+          "ArrowLeft",
+          "ArrowRight",
+          "KeyW",
+          "KeyA",
+          "KeyS",
+          "KeyD",
+        ]);
+
+        window.addEventListener("keydown", (event) => {
+          if (controlKeys.has(event.code)) {
+            event.preventDefault();
+          }
+          keys[event.code] = true;
+          updateKeyVector();
+        });
+
+        window.addEventListener("keyup", (event) => {
+          keys[event.code] = false;
+          updateKeyVector();
+        });
+
+        function setJoystickVector(event) {
+          if (pointerId !== event.pointerId) return;
+          const rect = joystick.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          const dx = event.clientX - centerX;
+          const dy = event.clientY - centerY;
+          const maxDistance = rect.width * 0.38;
+          const distance = Math.min(Math.hypot(dx, dy), maxDistance);
+          const angle = Math.atan2(dy, dx);
+          if (maxDistance < 1) {
+            joystickVector = { x: 0, y: 0 };
+          } else {
+            joystickVector.x = (distance / maxDistance) * Math.cos(angle);
+            joystickVector.y = (distance / maxDistance) * Math.sin(angle);
+          }
+          joystickStick.style.transform = `translate(${joystickVector.x * 36}%, ${joystickVector.y * 36}%)`;
+        }
+
+        function resetJoystick() {
+          joystickVector.x = 0;
+          joystickVector.y = 0;
+          joystickStick.style.transform = "translate(0, 0)";
+          if (pointerId !== null) {
+            try {
+              joystick.releasePointerCapture(pointerId);
+            } catch (err) {
+              /* ignore */
+            }
+          }
+          pointerId = null;
+          joystick.classList.remove("active");
+        }
+
+        joystick.addEventListener("pointerdown", (event) => {
+          event.preventDefault();
+          pointerId = event.pointerId;
+          joystick.setPointerCapture(pointerId);
+          joystick.classList.add("active");
+          setJoystickVector(event);
+        });
+
+        joystick.addEventListener("pointermove", (event) => {
+          if (pointerId !== event.pointerId) return;
+          setJoystickVector(event);
+        });
+
+        joystick.addEventListener("pointerup", (event) => {
+          if (pointerId !== event.pointerId) return;
+          resetJoystick();
+        });
+
+        joystick.addEventListener("pointercancel", resetJoystick);
+
+        let audioCtx = null;
+        let masterGain = null;
+        let bgmGain = null;
+        let sfxGain = null;
+        let bgmVoices = [];
+        let bgmInterval = null;
+
+        function ensureAudio() {
+          if (audioCtx) {
+            if (audioCtx.state === "suspended") {
+              audioCtx.resume();
+            }
+            return true;
+          }
+          const AudioContextCtor =
+            window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextCtor) return false;
+          audioCtx = new AudioContextCtor();
+          masterGain = audioCtx.createGain();
+          masterGain.gain.value = 0.7;
+          masterGain.connect(audioCtx.destination);
+
+          bgmGain = audioCtx.createGain();
+          bgmGain.gain.value = 0.0001;
+          bgmGain.connect(masterGain);
+
+          sfxGain = audioCtx.createGain();
+          sfxGain.gain.value = 0.8;
+          sfxGain.connect(masterGain);
+          return true;
+        }
+
+        function startBgm() {
+          if (!ensureAudio()) return;
+          if (bgmGain) {
+            const now = audioCtx.currentTime;
+            bgmGain.gain.cancelScheduledValues(now);
+            bgmGain.gain.linearRampToValueAtTime(0.22, now + 0.8);
+          }
+          if (bgmInterval) return;
+
+          const freqs = [220, 330, 440];
+          bgmVoices = freqs.map((freq, index) => {
+            const osc = audioCtx.createOscillator();
+            osc.type = index === 2 ? "sine" : "triangle";
+            osc.frequency.value = freq;
+            const gain = audioCtx.createGain();
+            gain.gain.value = 0;
+            osc.connect(gain);
+            gain.connect(bgmGain);
+            osc.start();
+            return { osc, gain };
+          });
+
+          const progression = [
+            [220, 330, 440],
+            [196, 294, 392],
+            [233, 349, 466],
+            [247, 330, 494],
+          ];
+          let step = 0;
+
+          const switchChord = () => {
+            if (!audioCtx || !bgmGain) return;
+            const chord = progression[step % progression.length];
+            const now = audioCtx.currentTime;
+            chord.forEach((freq, index) => {
+              const voice = bgmVoices[index];
+              voice.osc.frequency.cancelScheduledValues(now);
+              voice.osc.frequency.linearRampToValueAtTime(freq, now + 0.5);
+              voice.gain.gain.cancelScheduledValues(now);
+              voice.gain.gain.linearRampToValueAtTime(
+                0.16 - index * 0.03,
+                now + 0.6
+              );
+            });
+            const target = step % 2 === 0 ? 0.2 : 0.17;
+            bgmGain.gain.cancelScheduledValues(now);
+            bgmGain.gain.linearRampToValueAtTime(target, now + 1.4);
+            step += 1;
+          };
+
+          switchChord();
+          bgmInterval = window.setInterval(switchChord, 2400);
+        }
+
+        function fadeBgmDown() {
+          if (!bgmGain || !audioCtx) return;
+          const now = audioCtx.currentTime;
+          bgmGain.gain.cancelScheduledValues(now);
+          bgmGain.gain.linearRampToValueAtTime(0.08, now + 0.7);
+        }
+
+        function playSfx(type) {
+          if (!ensureAudio() || !audioCtx || !sfxGain) return;
+          const now = audioCtx.currentTime;
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          let duration = 0.3;
+
+          switch (type) {
+            case "tackle":
+              osc.type = "square";
+              osc.frequency.setValueAtTime(190, now);
+              osc.frequency.exponentialRampToValueAtTime(60, now + 0.32);
+              gain.gain.setValueAtTime(0.7, now);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.34);
+              duration = 0.36;
+              break;
+            case "bounce":
+              osc.type = "sine";
+              osc.frequency.setValueAtTime(420, now);
+              osc.frequency.linearRampToValueAtTime(660, now + 0.18);
+              gain.gain.setValueAtTime(0.6, now);
+              gain.gain.linearRampToValueAtTime(0.001, now + 0.26);
+              duration = 0.28;
+              break;
+            case "goal":
+              osc.type = "triangle";
+              osc.frequency.setValueAtTime(392, now);
+              osc.frequency.linearRampToValueAtTime(523, now + 0.2);
+              gain.gain.setValueAtTime(0.8, now);
+              gain.gain.linearRampToValueAtTime(0.001, now + 0.6);
+              duration = 0.62;
+              break;
+            case "slide":
+              osc.type = "sawtooth";
+              osc.frequency.setValueAtTime(260, now);
+              osc.frequency.linearRampToValueAtTime(210, now + 0.22);
+              gain.gain.setValueAtTime(0.35, now);
+              gain.gain.linearRampToValueAtTime(0.001, now + 0.26);
+              duration = 0.28;
+              break;
+            default:
+              osc.type = "sine";
+              gain.gain.setValueAtTime(0.4, now);
+              gain.gain.linearRampToValueAtTime(0.001, now + 0.2);
+              duration = 0.24;
+          }
+
+          osc.connect(gain);
+          gain.connect(sfxGain);
+          osc.start(now);
+          osc.stop(now + duration);
+          osc.addEventListener("ended", () => {
+            gain.disconnect();
+            osc.disconnect();
+          });
+        }
+
+        function spawnOpponent() {
+          if (!currentDifficulty) return;
+          const diff = currentDifficulty;
+          opponents.push({
+            x: field.width + 60,
+            y: randomRange(80, field.height - 80),
+            radius: 22,
+            vx: -diff.baseSpeed,
+            vy: 0,
+            cooldown: randomRange(diff.slideCooldown[0], diff.slideCooldown[1]),
+            slideTimer: 0,
+            rotation: Math.random() * Math.PI * 2,
+            state: diff.bounce ? "easy" : "active",
+            knockTimer: 0,
+          });
+        }
+
+        function checkCollision(a, b) {
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const limit = a.radius + b.radius - 2;
+          return dx * dx + dy * dy <= limit * limit;
+        }
+
+        function handleCollision(opponent) {
+          if (!currentDifficulty) return;
+          if (currentDifficulty.bounce) {
+            if (opponent.state === "knocked") return;
+            const dx = opponent.x - player.x;
+            const dy = opponent.y - player.y;
+            const angle = Math.atan2(dy, dx);
+            const power = 380;
+            opponent.vx = Math.cos(angle) * power;
+            opponent.vy = Math.sin(angle) * power;
+            opponent.state = "knocked";
+            opponent.knockTimer = 0.9;
+            playSfx("bounce");
+          } else {
+            playSfx("tackle");
+            fadeBgmDown();
+            endGame(false);
+          }
+        }
+
+        function startGame(key) {
+          const diff = difficulties[key];
+          if (!diff) return;
+          currentDifficulty = diff;
+          opponents = [];
+          spawnTimer = randomRange(diff.spawn[0] * 0.5, diff.spawn[0]);
+          elapsedTime = 0;
+          state = "playing";
+          goalGlow = 0;
+          resetPlayerPosition();
+          progressFill.style.width = "0%";
+          timeLabel.textContent = "0.0";
+          difficultyLabel.textContent = `${diff.price} | ${diff.name}`;
+          priceLabel.textContent = diff.description;
+          priceLabel.style.color = diff.tint;
+          hud.classList.remove("hidden");
+          joystick.classList.remove("hidden");
+          menu.classList.add("hidden");
+          message.classList.add("hidden");
+          resetJoystick();
+          startBgm();
+          lastTimestamp = performance.now();
+        }
+
+        function endGame(success) {
+          if (state !== "playing") return;
+          state = success ? "win" : "gameover";
+          resetJoystick();
+          joystick.classList.add("hidden");
+          if (success) {
+            playSfx("goal");
+            goalGlow = 2.6;
+          }
+          fadeBgmDown();
+          messageTitle.textContent = success ? "GOOOOL!!!" : "倒された...";
+          if (currentDifficulty) {
+            const timeText = `到達タイム ${elapsedTime.toFixed(1)} 秒`;
+            if (success) {
+              messageText.textContent = `${currentDifficulty.price} (${currentDifficulty.name}) を支払って突破成功！ ${timeText}`;
+            } else if (currentDifficulty.bounce) {
+              messageText.textContent =
+                "VIP待遇でも油断禁物。相手が吹っ飛ぶあいだにゴールを決めよう！";
+            } else {
+              messageText.textContent = `相手のスライディングに倒されてしまった。${timeText}`;
+            }
+          } else {
+            messageText.textContent = "難易度を選び直してください。";
+          }
+          message.classList.remove("hidden");
+        }
+
+        function goToMenu() {
+          state = "menu";
+          menu.classList.remove("hidden");
+          hud.classList.add("hidden");
+          message.classList.add("hidden");
+          joystick.classList.add("hidden");
+          fadeBgmDown();
+          resetPlayerPosition();
+          opponents = [];
+          elapsedTime = 0;
+          progressFill.style.width = "0%";
+          timeLabel.textContent = "0.0";
+        }
+
+        difficultyButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            const diffKey = button.getAttribute("data-difficulty");
+            startGame(diffKey);
+          });
+        });
+
+        retryButton.addEventListener("click", () => {
+          if (!currentDifficulty) {
+            goToMenu();
+            return;
+          }
+          startGame(currentDifficulty.key);
+        });
+
+        backButton.addEventListener("click", () => {
+          goToMenu();
+        });
+
+        function update(dt) {
+          if (!currentDifficulty) return;
+          elapsedTime += dt;
+          timeLabel.textContent = elapsedTime.toFixed(1);
+
+          let inputX = keyVector.x + joystickVector.x;
+          let inputY = keyVector.y + joystickVector.y;
+          const magnitude = Math.hypot(inputX, inputY);
+          if (magnitude > 1) {
+            inputX /= magnitude;
+            inputY /= magnitude;
+          }
+
+          player.x += inputX * player.speed * dt;
+          player.y += inputY * player.speed * dt;
+          player.x = clamp(
+            player.x,
+            player.radius + 32,
+            field.width - player.radius - 8
+          );
+          player.y = clamp(
+            player.y,
+            player.radius + 36,
+            field.height - player.radius - 36
+          );
+
+          const diff = currentDifficulty;
+          spawnTimer -= dt;
+          if (spawnTimer <= 0) {
+            spawnOpponent();
+            spawnTimer = randomRange(diff.spawn[0], diff.spawn[1]);
+          }
+
+          for (const opponent of opponents) {
+            if (opponent.state === "knocked") {
+              opponent.x += opponent.vx * dt;
+              opponent.y += opponent.vy * dt;
+              opponent.vx *= 0.9;
+              opponent.vy *= 0.9;
+              opponent.knockTimer -= dt;
+              if (opponent.knockTimer <= 0) {
+                opponent.state = "fading";
+              }
+              continue;
+            }
+
+            if (opponent.state === "fading") continue;
+
+            opponent.cooldown -= dt;
+            if (opponent.slideTimer > 0) {
+              opponent.slideTimer -= dt;
+            } else if (
+              opponent.cooldown <= 0 &&
+              Math.abs(opponent.x - player.x) < 260
+            ) {
+              opponent.slideTimer = 0.36 + Math.random() * 0.16;
+              opponent.cooldown = randomRange(
+                diff.slideCooldown[0],
+                diff.slideCooldown[1]
+              );
+              if (!diff.bounce) {
+                playSfx("slide");
+              }
+            }
+
+            const chase = player.y - opponent.y;
+            opponent.y += chase * diff.chaseResponse * dt;
+            opponent.y = clamp(
+              opponent.y,
+              opponent.radius + 28,
+              field.height - opponent.radius - 28
+            );
+
+            const slideMultiplier = opponent.slideTimer > 0 ? diff.slideBoost : 1;
+            opponent.x += opponent.vx * slideMultiplier * dt;
+            opponent.rotation += dt * diff.baseSpeed * 0.02;
+
+            if (checkCollision(player, opponent)) {
+              handleCollision(opponent);
+            }
+          }
+
+          opponents = opponents.filter((opponent) => {
+            if (opponent.state === "fading") {
+              return false;
+            }
+            return (
+              opponent.x > -140 &&
+              opponent.x < field.width + 220 &&
+              opponent.y > -140 &&
+              opponent.y < field.height + 140
+            );
+          });
+
+          const progress = clamp(
+            (player.x - startX) / (goal.start - startX),
+            0,
+            1
+          );
+          progressFill.style.width = `${(progress * 100).toFixed(1)}%`;
+
+          if (player.x + player.radius >= goal.start + goal.width * 0.6) {
+            endGame(true);
+            progressFill.style.width = "100%";
+          }
+        }
+
+        function drawField() {
+          const gradient = ctx.createLinearGradient(0, 0, 0, field.height);
+          gradient.addColorStop(0, "#0a4a33");
+          gradient.addColorStop(1, "#043324");
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, field.width, field.height);
+
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.24)";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(36, 36, field.width - 72, field.height - 72);
+
+          ctx.beginPath();
+          ctx.moveTo(field.width / 2, 36);
+          ctx.lineTo(field.width / 2, field.height - 36);
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.18)";
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.arc(field.width / 2, field.height / 2, 60, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.setLineDash([8, 8]);
+          ctx.beginPath();
+          ctx.arc(startX, field.height / 2, 52, 0, Math.PI * 2);
+          ctx.strokeStyle = "rgba(0, 0, 0, 0.18)";
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        function drawGoal() {
+          const mouthX = goal.start;
+          const mouthWidth = goal.width;
+          const mouthHeight = 160;
+          const mouthY = field.height / 2 - mouthHeight / 2;
+
+          const netGradient = ctx.createLinearGradient(
+            mouthX,
+            mouthY,
+            mouthX + mouthWidth,
+            mouthY + mouthHeight
+          );
+          netGradient.addColorStop(0, "rgba(255,255,255,0.15)");
+          netGradient.addColorStop(1, "rgba(255,255,255,0.05)");
+          ctx.fillStyle = netGradient;
+          ctx.fillRect(mouthX, mouthY, mouthWidth, mouthHeight);
+
+          const pulse = 0.22 + Math.sin(visualTime * 3.1) * 0.08 + goalGlow * 0.18;
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.34 + goalGlow * 0.14})`;
+          ctx.lineWidth = 3 + goalGlow * 1.2;
+          ctx.strokeRect(mouthX - 6, mouthY + 8, mouthWidth + 12, mouthHeight - 16);
+
+          ctx.fillStyle = `rgba(17, 228, 255, ${0.12 + pulse * 0.45})`;
+          ctx.fillRect(mouthX - 4, mouthY + 14, mouthWidth + 8, mouthHeight - 28);
+
+          goalGlow = Math.max(0, goalGlow - 0.04);
+        }
+
+        function drawPlayer() {
+          ctx.save();
+          ctx.translate(player.x, player.y);
+          ctx.fillStyle = "rgba(10, 20, 23, 0.22)";
+          ctx.beginPath();
+          ctx.ellipse(-player.radius * 0.4, player.radius * 1.15, player.radius * 1.6, player.radius * 0.7, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          const glow = ctx.createRadialGradient(
+            0,
+            0,
+            player.radius * 0.2,
+            0,
+            0,
+            player.radius * 1.3
+          );
+          glow.addColorStop(0, "rgba(120, 255, 239, 0.9)");
+          glow.addColorStop(1, "rgba(8, 91, 109, 0.2)");
+          ctx.fillStyle = glow;
+          ctx.beginPath();
+          ctx.arc(0, 0, player.radius * 1.15, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = "#1cd8ff";
+          ctx.beginPath();
+          ctx.arc(0, 0, player.radius * 0.65, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        function drawOpponents() {
+          if (!currentDifficulty) return;
+          for (const opponent of opponents) {
+            ctx.save();
+            ctx.translate(opponent.x, opponent.y);
+            ctx.rotate(Math.sin(opponent.rotation) * 0.18);
+
+            const intensity =
+              opponent.state === "knocked" ? 0.55 : opponent.slideTimer > 0 ? 1 : 0.8;
+            const baseColor = currentDifficulty.tint;
+            const gradient = ctx.createLinearGradient(
+              -opponent.radius,
+              -opponent.radius,
+              opponent.radius,
+              opponent.radius
+            );
+            gradient.addColorStop(0, `rgba(255,255,255,${0.4 * intensity})`);
+            gradient.addColorStop(
+              1,
+              `rgba(${parseInt(baseColor.slice(1, 3), 16)}, ${parseInt(
+                baseColor.slice(3, 5),
+                16
+              )}, ${parseInt(baseColor.slice(5, 7), 16)}, ${0.85 * intensity})`
+            );
+
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.ellipse(
+              0,
+              0,
+              opponent.radius * 1.15,
+              opponent.radius * 0.78,
+              0,
+              0,
+              Math.PI * 2
+            );
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "rgba(0,0,0,0.25)";
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+
+        function render() {
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          const scale = Math.min(
+            canvas.width / field.width,
+            canvas.height / field.height
+          );
+          const offsetX = (canvas.width - field.width * scale) / 2;
+          const offsetY = (canvas.height - field.height * scale) / 2;
+
+          ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
+          drawField();
+          drawGoal();
+          drawOpponents();
+          drawPlayer();
+        }
+
+        function loop(timestamp) {
+          requestAnimationFrame(loop);
+          if (!lastTimestamp) {
+            lastTimestamp = timestamp;
+            return;
+          }
+          const delta = Math.min((timestamp - lastTimestamp) / 1000, 0.05);
+          lastTimestamp = timestamp;
+          visualTime += delta;
+          if (state === "playing") {
+            update(delta);
+          }
+          render();
+        }
+
+        requestAnimationFrame(loop);
+      })();
+    </script>
   </body>
 </html>
