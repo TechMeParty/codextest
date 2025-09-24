@@ -1,4 +1,30 @@
+<<<<<<< HEAD
   const PLAYER_IMAGE_BASE64 = "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0icGxheWVyR3JhZCIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMmRmMWZmIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzA2NzRmZiIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPHJlY3QgeD0iOCIgeT0iOCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiByeD0iMTgiIGZpbGw9InVybCgjcGxheWVyR3JhZCkiLz4KICA8Y2lyY2xlIGN4PSI0OCIgY3k9IjM2IiByPSIxNiIgZmlsbD0iIzAxMjczMyIgb3BhY2l0eT0iMC42NSIvPgogIDxwYXRoIGQ9Ik0yNCA3NGM2LTE4IDQyLTE4IDQ4IDAiIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuODUiLz4KICA8Y2lyY2xlIGN4PSI0MCIgY3k9IjMyIiByPSI0IiBmaWxsPSIjZmZmZmZmIi8+CiAgPGNpcmNsZSBjeD0iNTYiIGN5PSIzMiIgcj0iNCIgZmlsbD0iI2ZmZmZmZiIvPgo8L3N2Zz4=";
   const ENEMY_IMAGE_BASE64 = "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDk2IDk2Ij4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZW5lbXlHcmFkIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiNmZjVmNWYiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjOGIwZjBmIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB4PSI4IiB5PSI4IiB3aWR0aD0iODAiIGhlaWdodD0iODAiIHJ4PSIyMCIgZmlsbD0idXJsKCNlbmVteUdyYWQpIi8+CiAgPGNpcmNsZSBjeD0iNDgiIGN5PSIzOCIgcj0iMTgiIGZpbGw9IiMxYjAzMDMiIG9wYWNpdHk9IjAuNyIvPgogIDxwYXRoIGQ9Ik0zMiA3MGM4LTE2IDI0LTE2IDMyIDAiIGZpbGw9IiNmZmRmZGYiIG9wYWNpdHk9IjAuODUiLz4KICA8cmVjdCB4PSIzNiIgeT0iMzAiIHdpZHRoPSI2IiBoZWlnaHQ9IjEwIiBmaWxsPSIjZmZmZmZmIi8+CiAgPHJlY3QgeD0iNTQiIHk9IjMwIiB3aWR0aD0iNiIgaGVpZ2h0PSIxMCIgZmlsbD0iI2ZmZmZmZiIvPgo8L3N2Zz4=";
   const PLAYER_IMAGE_URL = base64ToBlobUrl(PLAYER_IMAGE_BASE64, "image/svg+xml");
   const ENEMY_IMAGE_URL = base64ToBlobUrl(ENEMY_IMAGE_BASE64, "image/svg+xml");
+=======
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Star Hopper 3D</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="hud">
+      <h1>Star Hopper 3D</h1>
+      <p>矢印キーか WASD で移動、スペースでジャンプ。制限時間内に光るオーブをできるだけ多く集めよう！</p>
+      <div class="stats">
+        <span>スコア: <span id="score">0</span></span>
+        <span>残り時間: <span id="time">60</span>s</span>
+      </div>
+      <p id="status" class="hidden"></p>
+      <p class="hint">ゲームをリスタートするには Enter を押してください。</p>
+    </div>
+    <canvas id="game"></canvas>
+    <script type="module" src="main.js"></script>
+  </body>
+</html>
+>>>>>>> parent of 4474d25 (Merge pull request #2 from TechMeParty/codex/create-south-american-soccer-game)
