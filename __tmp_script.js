@@ -1,405 +1,4 @@
-﻿<!DOCTYPE html>
-<html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-    />
-    <title>南米ストリートサッカー：Dream Run</title>
-    <style>
-      :root {
-        color-scheme: dark;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", system-ui,
-          -apple-system, BlinkMacSystemFont, sans-serif;
-        background: radial-gradient(circle at 20% 20%, #032026, #01090d 60%);
-        color: #f7fbff;
-        overflow: hidden;
-        user-select: none;
-        touch-action: manipulation;
-      }
-
-      #app {
-        position: relative;
-        width: 100vw;
-        height: 100vh;
-        overflow: hidden;
-      }
-
-      canvas {
-        width: 100%;
-        height: 100%;
-        display: block;
-        background: radial-gradient(circle at 50% 20%, #063b2e, #041c17 70%);
-      }
-
-      .hidden {
-        opacity: 0;
-        pointer-events: none;
-      }
-
-      #hud {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        display: flex;
-        justify-content: space-between;
-        padding: clamp(12px, 4vw, 32px);
-        gap: 16px;
-        transition: opacity 0.3s ease;
-        pointer-events: auto; /* allow interaction with HUD controls */
-        align-items: center;
-      }
-
-      #hud .card {
-        background: rgba(1, 15, 17, 0.55);
-        border: 1px solid rgba(119, 254, 255, 0.24);
-        padding: clamp(10px, 2.2vw, 16px) clamp(14px, 3vw, 22px);
-        border-radius: 16px;
-        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25);
-        min-width: 0;
-        backdrop-filter: blur(8px);
-      }
-
-      /* small player icon shown in HUD */
-      .player-icon {
-        width: 36px;
-        height: 36px;
-        object-fit: contain;
-        border-radius: 8px;
-        margin-left: 10px;
-        vertical-align: middle;
-        box-shadow: 0 6px 14px rgba(0,0,0,0.35);
-        border: 1px solid rgba(255,255,255,0.06);
-      }
-
-      #hud .card strong {
-        font-size: clamp(14px, 3.2vw, 18px);
-        letter-spacing: 0.08em;
-      }
-
-      #hud .card span {
-        display: block;
-        font-size: clamp(12px, 3vw, 16px);
-        opacity: 0.86;
-        margin-top: 4px;
-      }
-
-      /* audio controls */
-      .audio-controls {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .audio-controls button {
-        background: rgba(10, 30, 34, 0.7);
-        border: 1px solid rgba(144, 236, 255, 0.14);
-        color: #cffeff;
-        padding: 8px 10px;
-        border-radius: 10px;
-        font-weight: 600;
-      }
-
-      .audio-controls input[type="range"] {
-        width: 110px;
-      }
-      /* progress bar removed per request */
-.overlay {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        padding: clamp(20px, 6vw, 48px);
-        background: rgba(2, 10, 12, 0.78);
-        backdrop-filter: blur(10px);
-        transition: opacity 0.4s ease;
-      }
-
-      #menu h1 {
-        font-size: clamp(24px, 6vw, 42px);
-        line-height: 1.2;
-        margin-bottom: clamp(12px, 3vw, 20px);
-        text-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
-      }
-
-      #menu p {
-        font-size: clamp(15px, 4vw, 18px);
-        line-height: 1.7;
-        max-width: 620px;
-        margin: 0 auto clamp(28px, 7vw, 36px);
-        color: rgba(241, 248, 255, 0.92);
-      }
-
-      .difficulty-buttons {
-        display: flex;
-        flex-direction: column;
-        gap: clamp(12px, 3vw, 18px);
-        width: min(420px, 100%);
-      }
-
-      .difficulty-buttons button {
-        background: linear-gradient(135deg, rgba(7, 25, 32, 0.9), rgba(6, 65, 67, 0.92));
-        border: 1px solid rgba(122, 244, 255, 0.28);
-        border-radius: 20px;
-        padding: clamp(16px, 4vw, 22px);
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        color: #e1fbff;
-        font-size: clamp(15px, 4vw, 18px);
-        font-weight: 600;
-        gap: 6px;
-        box-shadow: 0 18px 32px rgba(0, 0, 0, 0.35);
-        transition: transform 0.15s ease, box-shadow 0.2s ease;
-      }
-
-      .difficulty-buttons button:active {
-        transform: scale(0.97);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.32);
-      }
-
-      .difficulty-buttons button .row {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        gap: 12px;
-      }
-
-      .difficulty-buttons .price {
-        font-size: clamp(22px, 6vw, 30px);
-        font-weight: 800;
-        letter-spacing: 0.02em;
-      }
-
-      .difficulty-buttons .name {
-        font-size: clamp(16px, 5vw, 20px);
-        letter-spacing: 0.18em;
-        opacity: 0.92;
-      }
-
-      .badge {
-        align-self: flex-end;
-        padding: 6px 12px;
-        border-radius: 999px;
-        font-size: clamp(12px, 3.6vw, 14px);
-        letter-spacing: 0.06em;
-        font-weight: 500;
-      }
-
-      .badge.bad {
-        background: rgba(255, 82, 82, 0.16);
-        color: #ff9f9f;
-        border: 1px solid rgba(255, 98, 98, 0.4);
-      }
-
-      .badge.mid {
-        background: rgba(255, 214, 94, 0.16);
-        color: #ffe9a3;
-        border: 1px solid rgba(255, 214, 94, 0.42);
-      }
-
-      .badge.good {
-        background: rgba(110, 255, 205, 0.18);
-        color: #afffe1;
-        border: 1px solid rgba(138, 255, 220, 0.42);
-      }
-
-      #message h2 {
-        font-size: clamp(26px, 7vw, 38px);
-        margin-bottom: 12px;
-      }
-
-      #message p {
-        font-size: clamp(15px, 4vw, 18px);
-        line-height: 1.7;
-        max-width: min(520px, 90vw);
-        margin: 0 auto;
-      }
-
-      #message button {
-        margin-top: clamp(18px, 4vw, 24px);
-        width: min(320px, 88vw);
-      }
-
-      button.secondary {
-        background: rgba(6, 30, 36, 0.8);
-        border: 1px solid rgba(144, 236, 255, 0.32);
-        color: #b8f5ff;
-      }
-
-      button {
-        border: none;
-        cursor: pointer;
-      }
-
-      #joystick {
-        position: absolute;
-        bottom: clamp(20px, 7vh, 48px);
-        left: clamp(18px, 8vw, 52px);
-        width: clamp(120px, 28vw, 168px);
-        aspect-ratio: 1 / 1;
-        border-radius: 50%;
-        border: 2px solid rgba(144, 247, 255, 0.25);
-        background: rgba(0, 13, 18, 0.55);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        box-shadow: 0 18px 36px rgba(0, 0, 0, 0.35);
-        touch-action: none;
-        transition: opacity 0.25s ease;
-      }
-
-      /* mobile / portrait adjustments */
-      @media (max-width: 640px), (orientation: portrait) {
-        #hud {
-          flex-direction: column;
-          align-items: center;
-          gap: 10px;
-          padding: 12px;
-        }
-
-        #joystick {
-          left: 50%;
-          transform: translateX(-50%);
-          bottom: clamp(10px, 5vh, 20px);
-          width: clamp(92px, 22vw, 140px);
-        }
-
-        .audio-controls input[type="range"] {
-          width: 84px;
-        }
-
-        .difficulty-buttons {
-          width: 100%;
-        }
-      }
-
-      #joystick.active {
-        border-color: rgba(144, 247, 255, 0.6);
-      }
-
-      #joystick .ring {
-        position: absolute;
-        width: 70%;
-        height: 70%;
-        border: 1.6px dashed rgba(180, 255, 255, 0.35);
-        border-radius: 50%;
-      }
-
-      #joystick-stick {
-        width: 38%;
-        height: 38%;
-        border-radius: 50%;
-        background: rgba(111, 255, 220, 0.82);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
-        transform: translate(0, 0);
-        transition: transform 0.12s ease;
-      }
-
-      @media (min-width: 860px) {
-        #hud {
-          padding: 26px 40px;
-        }
-
-        #joystick {
-          left: clamp(30px, 10vw, 88px);
-          width: clamp(120px, 18vw, 180px);
-        }
-
-        body {
-          font-size: 16px;
-        }
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        *,
-        *::before,
-        *::after {
-          animation-duration: 0.01ms !important;
-          animation-iteration-count: 1 !important;
-          transition-duration: 0.01ms !important;
-          scroll-behavior: auto !important;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div id="app">
-      <canvas id="gameCanvas"></canvas>
-
-      <div id="hud" class="hidden">
-        <div class="card">
-          <strong id="difficulty-label">EASY</strong>
-          <img id="hud-player-icon" class="player-icon" alt="player icon" />
-          <span id="price-label">難易度を選択してください</span>
-        </div>
-        <div class="card">
-          <strong>経過 <span id="time-label">0.0</span>s</strong>
-        </div>
-        <div class="card audio-controls"><button id="bgm-toggle" aria-pressed="false">BGM 再生</button>
-          <button id="bgm-mute">ミュート</button>
-          <input id="bgm-volume" type="range" min="0" max="1" step="0.01" value="0.7" aria-label="BGM 音量">
-        </div>
-      </div>
-
-      <div id="joystick" class="hidden">
-        <div class="ring"></div>
-        <div id="joystick-stick"></div>
-      </div>
-
-      <div id="menu" class="overlay">
-        <h1>南米ストリートサッカー：Dream Run</h1>
-        <p>
-          左の裏路地からスタートして、一番右のゴールに叩き込め！支払う金額で難易度が激変。
-          指でドラッグしてドリブルし、襲いかかるスライディングをかわそう。
-        </p>
-        <div class="difficulty-buttons">
-          <button data-difficulty="hard">
-            <div class="row">
-              <span class="price">$0</span>
-              <span class="name">HARD</span>
-            </div>
-            <span class="badge bad">容赦なし、ぶつかったら即 Game Over</span>
-          </button>
-          <button data-difficulty="normal">
-            <div class="row">
-              <span class="price">$10</span>
-              <span class="name">NORMAL</span>
-            </div>
-            <span class="badge mid">そこそこ手加減、読み合いの中盤</span>
-          </button>
-          <button data-difficulty="easy">
-            <div class="row">
-              <span class="price">$100</span>
-              <span class="name">EASY</span>
-            </div>
-            <span class="badge good">VIP待遇、当たった相手が吹っ飛ぶ！</span>
-          </button>
-        </div>
-      </div>
-
-      <div id="message" class="overlay hidden">
-        <h2 id="message-title">GOOOOL!!!</h2>
-        <p id="message-text"></p>
-        <button id="retry">同じ難易度でリトライ</button>
-        <button id="back-to-menu" class="secondary">難易度選択に戻る</button>
-      </div>
-    </div>
-
-    <script>
+﻿
       (() => {
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
@@ -483,107 +82,79 @@
         let pointerId = null;
   // sprite images (optional)
   const PLAYER_IMAGE_SVG = /* html */ `
-<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
-	<style>
-		.s0 { opacity: .23;fill: #c3bdbc } 
-		.s1 { opacity: .37;fill: #9a8c7d } 
-		.s2 { opacity: .65;fill: #4c534b } 
-		.s3 { opacity: .97;fill: #2a2f34 } 
-		.s4 { opacity: .99;fill: #0c6f2f } 
-		.s5 { opacity: .99;fill: #0b0708 } 
-		.s6 { opacity: .99;fill: #7d4936 } 
-		.s7 { opacity: .99;fill: #f4f5f4 } 
-		.s8 { opacity: 1;fill: #1a4170 } 
-		.s9 { opacity: 1;fill: #be7d84 } 
-		.s10 { opacity: 1;fill: #b82a2d } 
-		.s11 { opacity: 1;fill: #3772b6 } 
-		.s12 { opacity: 1;fill: #c1bdb9 } 
-		.s13 { opacity: 1;fill: #c17a4a } 
-		.s14 { opacity: 1;fill: #33577f } 
-		.s15 { opacity: 1;fill: #2a7ac2 } 
-	</style>
-	<g id="Background">
-		<path id="Path 0" fill-rule="evenodd" class="s0" d="m261 54v-1h3v1zm52 0v-1h2v1zm-49 4v-4l1 4zm-28 1l23-1-14 1h-4zm-6 13l1-9h4l1-4v5h-4l-2 9zm-102 29l20-1v1zm-29 10l14-1 1-4v5zm101 0v-1l9 1zm205 61l-3-1 7 1zm4 5v-5l1 4 8 1zm33 28v-1l29 1h-1zm-71 4v-4h4l-4 5zm40 6v-1h3v5zm69 0v-1h1v19h-1zm-52 18l-1-13-13-1h14zm-234 0l1-9v9zm281 4v-4h5zm-313 49l4-1 1-9v1 9zm135-5v-1h5v10h-1v-9zm-144 29l-5-1h1zm105 38h-4l-1-10h2v9h3zm-63 0l-1-5 1 4zm66 5v-1h8v5h-14v-1h13v-3zm-157 9l4-1v-5h5v1h-4v5h-1zm197 28v-3h1zm-166 9v-4h4zm-73 33l1-4v4zm46-2v-2h1 4l-4 2zm-4 11l1-2-1 7zm137 6h4l1-4v5h-5zm-142 2v-2h5zm82 1l-5-3h5zm13 12v-5h1v4h5v1zm33-1v-4h1v5h-1z"/>
-		<path id="Path 1" fill-rule="evenodd" class="s1" d="m306 54v5h-5v-5l1 4h3zm29 24l-1-9-9-1h10zm-136 33v-5l1 4v1zm130 28v-19h5l-4 1zm-225 4h9v-4h1 6l-6 1v4h-9l-1 4v-1zm-47 1v-2h1l23 2zm115 14l-1-4-7-1h8v4zm212 5l2-1 2 5h-3zm43 28v-5l1 4h5v5l4 1h-5v-5h-4zm16 51h8v-9h10v1h-9v9h-9zm-253 11l4-1v-4l-4-1h5v6zm-14 14l5-1v1h-4zm126 24v-1l4 1zm-154 24l5-1v1zm-4 9l3-1 1-8v8 1zm97 4l-1-9h1zm-123 15l4-1 1-4v5zm207 0v-1l4 1zm-139 4h4v-4h1v5h-5zm9 1v-1h13zm-14 4h4v-4h1v5h-5zm144 20v-1h4zm-131 8v-5h33l-32 1v4zm-99 1l4-1v1zm206 6l14-2v-4h1v5l-14 1zm-157-1v-1h9zm-54 4l5-1v1h-1zm86 4v-5h5l1 1h-1-4zm-99 10l8-1v-9h5l-4 1v9zm93 5l1-15h5v1h-4v14h-1zm-102 9h3v-5h5l1-9v10h-1-4v4 1h-4zm190 1l1-10h1zm-195 28l-1-15h1zm36 4l-32 1v-4l-3-1h4v4zm101 11v-1h27v1z"/>
-		<path id="Path 2" fill-rule="evenodd" class="s2" d="m227 73l3-1v1zm-170 69v-17h1v17zm287 2l1 4 13 1h-14zm-245 5l5-2v1zm73 9v-1h9v2zm19 14l-1-4h-4l-1-5-4-1h9l1 5zm9 33l4-1v-27h1v28zm152 0l1-3 1 3v4h17v1h-18zm53 9l-1-4h-9v-5l-5-1h6v5h9zm65-4v-3h1l5 2v5h-1v-4zm6 5v-1h4v1zm-43 22l-5-4h5zm4 5l-1-4h1zm6 1l-6-1h6zm-142 9h4v-9h2l-1 10h-4v9h-3zm-134 24h4v-5h5v-4h1v4l-1 5-5 1h-4zm125-5h5l-4 1v4h4v5h-1v-4h-4zm-135 24v-5h5v1h-4v4zm149 1v-1h5l1 5h4v9l4 1h-5v-9h-4l-1-1v-4zm-158 5l4-1v1h-3v8h-1zm79 22h3.4l-2.4 6-6 1v-2h5zm3.4 0l0.6-1.5v1.5zm0.6-4h1l-1 2.5zm89 4h5l-4 1v9h-1zm-180 6l4-5v4l-1 1zm27 37h4l1-4v5h-5zm18 19v-5h10v1h-9v4zm-118 42l1-9v10h-1zm37 10h4v-7h1v8l-4 1-1 2-1-3zm132 15h3l2-5v6h-4l-1 3z"/>
-		<path id="Path 3" fill-rule="evenodd" class="s3" d="m236 64v-5h5v5zm-51 42l1-5h4l1 5v1h-5zm-13 14v-5l4-1 2 1-2 5zm-58 19v-5h42l1 5h-37zm115 15l3-1h4l2 5h7l-1 5h-3l-5 4v18l3 1v5h-2-5v-5-28zm16 23v-6l5 3v3zm10 18l5-1v-8h4l1 5h8v5l-8 1 5 8v5 5h-1-5v-5h-4l-5-14zm50-4l1-5h5v5h-5zm66 10v-5h5l2 4-2 2zm-93 14v-5h5l-2 5zm41 4l1-9h5v10h-5zm147 0v-5h5l-1 5zm-160 24v-9l5-1v10h-4zm-121 18v-4l5-1 1 1-1 5zm89 20v-5h4v5zm32 19v-4h4v4zm14 23v-4h5v4zm-176 5v-4h4v4zm133 10l1-5h5v4l-5 2zm44 5l-1-10h1 4v9 1zm-203 9v-9h5v8zm43 10l1-1h5v5 1l-2 4-4-1zm126 14v-5h5v5zm-55 10l-1 9h-22v-5h-5v-9h21l7 4zm4 0v-1l5 1v4h-4zm-146 8v-4h4l-2 10v4h-6v-9zm86 0l1-4h4v10h-5v-5zm60 24v-18l5-1 4 2v6l5 4v7h-3zm-50-14h13v-4h5v24h-9v4h-5v4 11h5v4h14v10h-14-1-8l-5-7v-3h4l1-4v-17l-5-2v-15l4-1zm-5 0v-4h4v4zm-65 5l2-4h4v4h-4l-1 4zm-44 9v-4h4v4zm142 10h4v-4h13l2-5h3l1 9h3v10h-4v5l5-1v5l-2 5h-3v-5h-18v-4h-4v-11zm0 0h-10v-4h10zm-44 5l2-7 1 7-1 9zm-66 4v-9h4v2 7zm105 10v-4h5v4z"/>
-		<path id="Path 4" class="s4" d="m242 101h-5v-4h8v4zm13 5h-10v-5h8zm65 0l2-5h6l2 6zm-88 9v-9l9 5v4h4 5v5h5 9v5h-9-5zm88-9v5h-65v-5zm-4 19v-5h8 1v5zm-52 4v-4h52v5h-5l-38 1z"/>
-		<path id="Path 5" fill-rule="evenodd" class="s5" d="m259 58l2-4h3v4h9l1-4h9v5h4l1-5h13v5h5v-5h7 2l1 4 9 1v9l9 1 1 9 4 1v16l-5 2v23h-5v19h-4v-14-5-5h5v-8l-2-6h-6l-2 5h-65l-2-5h-8v-4h-8l-5-1v10 9h-5v-42h3l2-9h4v4h4l1-4h4v-5zm-92 43h-18v-4h16zm-39 5v-5h20v5zm53 0h-14v-5h13zm-67 5v-5h13 1v4l-9 1zm67 0v-5h4l1 1-1 4zm10-4v-1h8v5h-8zm-114 8v-4h8v4zm22 0v-4h15v4zm77-1v-3h5v4h-3zm24 1v-4h9v4zm27 5h5v-5l18 10v23h-5v-4h-4v-5-9h-14v-1-4h-9v-5zm-151 0h-8v-4h8zm10 0v-4h13v4zm123 0v-4h9v4zm-147 1l4-1 1 5h-5zm15 4v-5h4v5zm90 5v-10h5v10zm-109 12v-17h3 1v5h14v4l-14 1v4h28v5h-4v4h-4l-1-4zm104-17l-1 5-4-5zm107 23v-4h4v-5h-13v-9l4-1 9 2 1 4h4v4h9v5h-9v4 5l-9-1zm-111-9h4v-8l5-1v17l5 3v3h-8l-1-9h-5zm65 0v-9h4v18h-4zm83 9v-4h-4v-5h4l5-9h5 4v9h-9v5h4v3 6h-9zm-202-5v-4h9v4zm217 4v-8h4v5h11 8v4h-19v5 5 4 5l-1 5-3-1zm-235 6v-5h9l4 1v4zm143 1l-2-5h5v4zm115-1v-4h14v4zm-172 4v-4h9v4zm186 0v-4h1 8v4h-8zm-177 2v-1h4v4h-4zm186 3v-4h8 5v4h-4zm14 10v-9h3l1 4h3l12 1v4h-15l1 5v9l-1 5h-4v5h10v4h5v4h-6-4v-4h-8l-2-4v-5l5-1v-9zm-190 0v-5h8l-1 5zm54-4h5v6l-5-3zm19 13v-9h5v-5h14v5h-10v5h-4l-1 4zm-64-8l4-1v5h-3zm87 4h-4v-5h4zm24 4h5v-9h4v28h-4v-14h-5zm98-4h-4v-5h4zm-204 28v-28h4v28zm45-24v-4h5v4h4v5zm20 0h22v-4h5v9h-8-20zm148 0h-9v-4h9zm0 5v-5l5 1v4zm-179 5v-5h2 4 5v5h-5zm188 0h-4v-5h4zm-172 5h-5v-5h4l1 4zm47 0v-5h3 1v5zm130 0h-4v-5h4zm-154 9v-5h-4l-1-4 25 1v3h8 5 5l-1 5h-4-19l-1-5h-8l-2 5zm159-5h-5v-4h5zm-112 5v-5l28 2-1 3h-22l-1 5h-4zm116-1l-4 1v-5h4zm-70 1v-4l5 1-1 3zm-171 18v-18h4v18zm70-13v-5h8l-1 5zm101-1h-17v-4h17zm34 0h-9v-4h9zm53 1h-15l-1-5h28v2 3zm-53 4v-4h8l1 4h-3-2zm66 0v-4h4v4zm-57 5v-5h12l2 5zm-136 0h-9v-4h1 8zm193 9h-4v-5h8l1-8h4v18h-5v-5zm-160 1l4-1v-8l4-1 1 1v8l-9 5zm117 4v-14h4v14zm38-14v4h-10v-4h5zm-271 14v-9h4v9zm247-4l14-1 5 1v4h-10v9h-8-6v-4h10v-5h-5zm-252 18v-13l4-1h1v10l10 14h4 4v4l-7 1-3-5h-4v-4h-4v-6zm243-10v-4h4v5h-1zm28-3v-1h10 4v4h-14zm-160 10l4-1v9h-4zm-9 20l5-4v-7l4-1-2 10-2 9h-5zm-102-8v-3h5v4h-4zm-9 10v-4h4v5h-4zm-4 5v-4h4v4zm55 0h-13l-1-4h4 10zm36 2v3h-27v-4l14-1zm11-1l13-1v5h-4-10zm-112 14v-9h4v8zm125-5v-4h4v4zm5 9v-9h4v9zm-135 0v-4h5v4zm-4 5v-4h4v4zm144 0v-4h4v4zm-149 5v-4l4-1v5zm-4 9v-8h3l1 4h5 4v4l-5 1v4h-4v-4zm162 0v-8h4v9h-4zm-149 5v-4h3 7v4l5 1v4h-5v-4h-9zm158 5h-4v-9h4zm-172 4v-8h5v8zm84-4v-4h8l1 4h-1zm-51 1v-1l9 5v4l-9-4zm46 3v-3l4-1v4zm14 5v-9l9 5v9h-3l-2-5zm-19 0l1-4h4v4zm65 1h4l1-5h15 13v9h-4l-1-5-9 1h-14v4h-5zm-92 4h-5v-5l5 1zm-56 0l1-4h3v4zm-8 5l1-5h7v5 5h-3l-1-5zm59 5v-4l5-1v-5h6l3 1 1 8 8-2-5 7h-13l-1-4h-3zm-67 0v-5h8v5h-4zm135 4h-3v-9h4zm15-4l1-5h3l1 1v4zm-134 4v-4h4l1 4zm14 0h-4v-4h4zm33 0v-4h4v4zm75 5l-1-4 4-5h9v4l9 5 1 5h4v5h-4l-1-5h-7-6v-5zm64 1v-10h4v28h-4v-5zm-168-5v4h-4v-5zm-13 4v-4l9 5v4h9v4l-1 1h-7l-2-5h-4-4zm37 0v-4h4v4zm-63 4l-4 1v-5h4zm59 1v-5h4v1l-1 4zm55 0v-5l22 1v4h-4zm-123 5v-5h4v5zm58-1v-4h9v4l-4 1-1 4h-4zm60 14v-18h5v5 19h4v4h-4l-7-4h-21l-7-1h-2v-4zm41-13h-13v-5h14zm-164 2v-2h4v9h-4zm212 16v-4h4v-4l4-1v9zm-217-7l4-1 1 6-5 3v-1-1zm45 12v-4h7l3-5h3v4l-4 1v4zm148 0h5l-5-9h9l1 5h13v4l-14 2v3h-37v19h-4-1v-23l24-1zm-197 4v-8h4v8l-4 1zm91-4v-4h9v4zm-5 4v-4h4v5h-3zm60 10v-9h4l1 9 4 1v9h9l-1 10h-3v13l-5 1v-9-5-1-7l-5-4v-6zm-114 0v-4h8v4zm45 10v-14h4v5 9zm-49-5l-1-3 5-1v4zm-46 10v-10h9v4h-5l-1 6zm37-1l-1-3 3-1 1 4zm53 20v-24h3 1l1 10v5 2l-2 7zm-58-5v-14h4v8 6zm-41 0v-9h4v8zm-5 4v-4h4l1 4v10 5h-4-1zm109 10l1-9h3v5h5v9h-5v-4zm69-4h4v-5h5v9l-4 1-1 4h-4v-5zm-142 9v-9h4l1 3v5 1zm0 4h-31v-4h31v2zm128 6v-5h9v4l-8 1zm-27 4h-5v-4h14 18v4z"/>
-		<path id="Path 6" fill-rule="evenodd" class="s6" d="m66 120l2-4v4h9v5h-10zm19 0l1-4v4zm77 5v-4l5-1v10l-5 1v8h-5l-1-5h-42l3-4h16l3-5h21l4 5zm79 14v5h4v4h5v-23h5v52h-5v-9h-5v-1l-1-4 1-5h-7l-2-5h4v-4l-8-3v-8zm-151 0h-28v-4l14-1v-4h4l2 5h6zm14 0l1-4 9-1v5zm-9 9l4-8 5-1v8l-5 2zm164 38v-5h-4v-4l9 4h4l1-4 1 4-1 5h20v5h13v5l-4 1-25-1v-5h-8l-1-5zm47 0v-4l5-1v5zm90 14h-5v-4h-10v-5h4l1-5 9 5 2 5h7l6 9h7l3 5h6l6 9h-4l-2-5h-12l-1-4h-8v-5h-9zm-126 5l-5-8 8-1 1 4h4v5zm141 10l-2-1h2zm50 4v-5h5v5zm-19 10l2-4h11l1 3zm-141 0l5-2 5 2v4l-5 1v9h-1l-4 1-4-1v-9h4zm136 9v-5h10v5zm-158 34l3-1v-4h5v-3h5v7zm-122 42v-4l5-1h3v1h-3v4zm0 34h13l15-15v-4l-8-1-6-9h-7l-1-4h9v4h5l4 1v4l9 4v5h5v5l-5 1v4h-4v5h-5v4h-4v5l-1 4v-4h-9v4h-5v-4h-9v-4l-9-5v-1l-1-4h-4v-5h9l1 5v4h4v5h4zm135-15v-4h14l-1 4h-12l-7 10h-3v4l4 2v8h-4l-1-5-9-5v-4h5v-4l5-2v-4zm-5 24l9 5 6 9h18l5-5v6l-1 8v-9l-4 1v4h-4v5h-14l-1-5h-9v-5h-5zm-40 62v-1h3v1z"/>
-		<path id="Path 7" fill-rule="evenodd" class="s7" d="m241 111l1-10h3v5h10v5h65v-5l10 1v8h-5l-1 5h-8v5h-52v-5h-9v-4l-5-1h-5v-4zm-50 2v-2h8v4h-7zm-10 7v-5h4v5zm28 0h-9v-5h9v1zm-23 4l2-4h7v5zm32 1h-9v-5h9zm-6 9h-12l-5-9h9l2 4 7 1 1 3zm6-5v-4h9v4zm-46 15v-9h4l1 4h9v5h9l1 5h8v4h9l1 5h8v4l-4 1v18h-4l-1-9h-4l-15-19h-8l-1-4h-7l-2-5zm42-8l8-1v4h-8zm55 16l-5 1v-4l-4-1v-4h8l1 4zm9 1v-5h4l1 4zm28 0h-4v-4l4-1zm19 5v-5h19 14v4l-19 1zm0 9v-5h20l13 1v4zm-84 19v-19h4v1 3 6 9zm135-14h-13v-5h13zm-107 5h4v-5h10v5h4 5v4h-22zm56 19v-15h5v-4l46 4v10h-22l-2-5h-8l-1 5h-4v-5h-4v4zm-103 25v-16h5v-19h5v5h5l1 5h7v4h-4v18l-5 1v10h-8l-1-5zm84-25v-5h5v9h-5zm-56 42v-4l5-1v-14h4l1-9h4v5h5v4h9v5l-5 1v4h-4l-2 5h-7l-1 4zm60-24h-17v-4l18 1zm-17 10v-5h13v5zm-70 33l1-4h3v4zm18 0v-4h4 10v4zm-46 10l1-10h3v8zm-5 4v-4h5v5h-4zm-18 24v-4l4-1v-8l5-1v-5h3l2 3v6l-10 6v4zm125 0h-5v-4h5zm-135 10v-5h5v-5h5v10h-5l-2 4h-3zm139-5h-4v-5l5 1v4zm-170 47h-4v-4h4v3zm96 10l5-5v5zm5 5v-5h18v5h-5v4h-8zm-37 19v-1h2l7 1v9h5v5h22l1-9h4l1 4h4v9l-5 1v18l-3 1-2 5h-13v4h-4v-4h-10v-24h-5v4h-13l-1-4h-4v-10h1 3v-5h1 9zm-23 28h4v-9h5v4l4 1v3l-4 1v15l5 2-1 7h-4v-3l-9-6v-5zm-86-1v-4h6l12 1v8h-13l-1-4zm-10 10l1-4h3l1 9-9 4v-8zm161 10v-9h10 3v5l-10 4zm-47 4v-4h5v-4h9v4h10v4l-1 6h-18v-4zm-122 0l4-2 1 3 21-1v5l-4 5h-22z"/>
-		<path id="Path 8" fill-rule="evenodd" class="s8" d="m172 150l-5-3v-17h5zm78 31l9 5h1v8l-5 1-1-4h-4zm126 10v-10h5v9zm-98 14h3l2-5h8l1 5-9 5h-6zm-83 52v-4h4v4zm4 8v-8h4l3 5 7-1 5 1v5l1 4h16l1-4h4l1 4h14l-14 1v4h27v-3h1v3h5v5l-1 4h-23v5l4 2-3 8 18-3 2 7-2 5-5 1-1 18 6 10h5l-1 5h-9l-4 5 1 4v1l-3-5v-1l1-9h-6l-6-5h3v-9l-9-5-1-4h-8v4h-1l-4 1v4h-4l-1 4v6h-4l-5 6-8 2-1-8-3-1v-4l8-1 3-6-1-10 3-3h18v-4h7l2-5h4v-9l-4-1v-4l4-3-12-2-1-4h-23v-10zm79 16v-5h10l-1 5zm-101 38v-4l4 1v4zm106 14v-4h4v4zm-139 19h-4l-1-5h5zm4 5h4l2 5h7v8l4 1-8 9v-4h-3l-3 5h-7v5l-5 9h-12v5l-5 1 1 3-1 5v-4h-4l-2 4-3 1 1 3-1 1h-9v-9l5-2v-4h4l5-9 14-10v-7l-9-7-1-7 5-1 7 8h14zm97 5h5l2 9h21l1 5h18l5 9h-5v-4h-9v4l-24 1-9-1v-4h-5zm34 4h4v-4h4v9h-8z"/>
-		<path id="Path 9" class="s9" d="m241 64v-5h4v5zm0 0l-1 4h-4v-4zm-93 36l1-3v4h18v5h14v5h-5-8l-3-4h-16l-2 4-19-1v-4h20v-5zm-21 6l1-5v5zm-50 9h8v-4l1 5-1 4h-4-4-1v-4zm22 0h15v-4h5l-7 9h-13v-4zm86 0l6-2 1 2-4 5-2 4-1-4zm139 5l1-5v5zm-106 0v-4l1 3 8 1zm-4 13l4 1v-5h9v1h-4v9h-1v-4l-8 1-2-2zm101 20v-6h6v24l-1 1h-4zm43 0v-4l1 4zm-19 5l19-1h1v6h-1l-13-1v-4zm47 19l-1-5h15v-4l2 3 3 1v5h4v4h9v5h-8l-3-5h-6l-3-4zm-51 13v-4h4v5zm135 17v-2h1v2zm-12 3h12 1v4h-5-5zm13 23v-5h4v5zm-332 105v-5h4v5zm186 15l-4-1v-9h4zm-84 89l-5 1v-5h4 1z"/>
-		<path id="Path 10" class="s10" d="m192 115h7v-4h1v4 5h9v5h9v4 5l-4-1-1-3-7-1-2-4h-9v-5h-7zm-16 20l1-14 4-1h4l1 4 9 1 5 9h12l2 2v3h8 1v9h4v1l2 5 3 4v28h-5v19h-5v16 7l-4 1v9h-4l-1 10h-4v9h-4l-10-14h4v-10h5v-10h5v-13h4v-23l5-1v-5-18l4-1v-4h-8l-1-5h-9v-4h-8l-1-5h-9v-5h-9zm149 18v-5h19v1 4zm0 9v-4h14 6v4zm34 1l8-1h9v5h-13v5h13v9l-46-4v4h-5v15 4 5l-5 1v4l-1 9-4 1v8l-4 1-5-2v-3-5-4l4-1 1-3v-6h4l1-5h4v-28l1-1 3 1 1-5h33v-4zm-114 33v-5h5v5h5l5 14-1 9h-4v14l-5 1v4 5h-5v10h-4v4l-1 5h-4v5l-1 4h-3v-4h-10l1-10h4v-4h-3l-1-5h4v-5l5-1v-8l4-1v-4-10l5-1v-18h4zm38 14l9-5v10 4h-4v5 5l-1 14-9 5v14l-5 1v9l-4 1h-1l-13-2v-4h4v-9l5-1v-14l5-1v-8h4v-5-4l5-1v-5-4h3zm4 54v-10l5-2v-9h5l4 1v8l-4 1v7l-5 4z"/>
-		<path id="Path 11" class="s11" d="m186 107h5v4 2l-6 2h-4v-4h4zm-14 13h4l2-5h3v5l-4 1-1 14h-4v-5zm204 47v-5h4l1 1v9h-5zm-137 19l-3-1v-18l5-4v4 19zm6 0v-9h5v4 5zm66 5v-5h5v14h-5zm-13 6l4-1h4v4h-8zm-28 18v-5h7 1v5zm-85 46l5 1 1-5h4 1l-1 10h-5v4h-4l-2 5h-3v5l-5 1v8l-4 1v4h-5v5h-5v5h-4l-1-5v-5h1 4v-4-1h5v-4l4-1v-8l5-1 1-5h4v-4h4v-5h-4zm112 30v-1h4 1v1 4 1l-5-1zm10 28h4v-9h4 1v9h4v4 1h-13zm-176 24v-5h4l1 5h3v4l1 5h4v5h4v5h-8v4h-6l-7-8-5 1-4-3v-4l5-1v-8h4v4h4v5h5v-4l-5-2zm119 14h4v-4l1 3v1 5h13l1 9h-17l-2-9zm25 5v-5h7l1 5zm-183 38l17-1v4l-5 2-12-1z"/>
-		<path id="Path 12" fill-rule="evenodd" class="s12" d="m232 106v-10l5 1v4h5l-1 10zm13 9h-4v-4h4zm10 5h-5v-5l5 1zm-83 30v-6h4l2 5h7l1 4h8l15 19h4l1 9h4v5l-5 1v23h-4v13h-5v-18h1 4v-28h-4-1v-5l-4 1-2-1 1-5h-8l-1-5h-5v-4h-4v-1-4h-9zm187 7h8v-4l1 4 7 1h-8v4l-8 1zm-118 10v-4h3l1 4zm98 24h4l1-5h8l2 5h22v5h-5v5 4h-17l-1-3-28-2v-4l10-6zm-94 5h-7l-1-5h2 6zm47 19v-10h19v6l-18-1v4h17l-4 1zm28-5v-4l5-1v5zm-32 14v-5h4 1v5zm-79 33v-9h4l1-10h4v-9l4-1v-7l5 3 1 5h8v4l-4 1v8l-5 1v5h-4l1 5-1 4-1 10h-4v-5l-5-1v-4zm-10-33l1-1h4v10h-5zm51 14h9l1-4h7l2-5h4v5h-4v8l-5 1v14l-5 1v9h-4v4h-14l-1-4h-4v-5h4l1-5h14v-4h-10v-10h5zm19 35l4-1v-9l5-1v-14l9-5 1-14h13v5h-4v9h-5v9l-5 2v10 3h-5v4l-3 1-1 4h-4-5zm-74-30v-10h4v10zm-11 33l2-5h4l1 1-5 7zm103 5l1-5h4v1 4 9h5v1h-5l-5-1zm20 38l-1-9-5-2v-8h1 4v9h5v1 9zm-176 28v-1l5 2v4h-5zm9 19v-4h8v4zm96 19v-4h-4v-19l5 4h8v15h5v4l9 1v23h-9v-9l-4-1-1-9h-4v-4zm43-19h-6l2-4h8v4zm8 10h-13l-1-5h6 8zm-4 9v-4h9v4zm-51 1v-1h4v1zm-51 18h4v-4l1 4-1 4v-3zm-101 10l1-6h5l4 1 1 4h13v1h5v14h-1-4v9l-1 1h-4v9h-31v-5h22l4-5v-5l-21 1-1-3-4 2-1-4h1l4-1 9-4zm92 5l-1-10h1zm-96-1v-4h1zm157 1l3-1h11v1h-10v9l-1-9zm-61 7v-2l9 6v3h4l1-7v17l-1 4h-4v-9h-5v-5h-3zm68 2l10-4v9h-5v5h-4-1zm-177 0l4-1v1zm146 19h-14v-4h-5v-11l5 2v4h18l1-6v11h-5zm0 0h5v-4h4v4h18v5h-9v5h-18z"/>
-		<path id="Path 13" fill-rule="evenodd" class="s13" d="m128 110l19 1 2-4h16l3 4h8v3l-4 1v5h-5l-5 1v4h-26l-3 5h-16l-3 4-9 1-1 4-5 1-4 8h-9v-4h4v-5l-2-4h-6l-2-5h-18v-5h19v-5h31l7-9zm-67 15l1-4v4zm194 52v-52h9v4l-4 1v9h13v5h-4v4l-1-4h-8v4l4 1v4l5-1 9 1 5-1-1-4h-4v-4h9v-5h-9v-4h-4l-1-4 38-1-5 9h-4v5h4v4l-4 1v4h13l1 19v9h-5l-5 1v4l-1 5h-16v-5h8v-9h-10v-5h-4v-5h-14v5h-5v9zm61-47v-5h9v14h-4v8h-6v-3h-4v-5h9v-9zm-89 0h14v9l-9-1v8l8 3v4h-8v-4h-5zm-141 23l-4-5h4zm300 33v-9h12l3 4h6l3 5h13v5h5v5h4v4h5v5l4-1h1v1l1 5h15l3 4v5h-5v4h10v-4h4l1-5h5v1l-1 8h-8v5h4v5h-10v-4l-5-1-1-3h-11l-2 4v4h-10v-14l-6-9h-6l-3-5h-7l-6-9h-7l-2-5zm-233 128h9l1 1 1 4h7l6 9 8 1v4l-15 15h-13l-4-1v-4h-4l-1-5h-5v-9l1-1h4v-5h5zm153 15l9-1 1 5h4l1 10v9l4 1v13l-5 5h-18l-6-9-9-5v-8l-4-2v-4h3l7-10h12z"/>
-		<path id="Path 14" class="s14" d="m376 181v-9h5v9zm-84 38v-4h14v4h-13zm-4 10v-5h5 13v3l-5 2zm9 61h-5v-9h4 1zm-56 0l-5-1v-3h5zm30 14l-2-7 5 1zm-119-3v-1h1 4l1 5h-5zm159 8h-5v-9h4l1 1zm-116 24v-4h6v4zm73 29l1-5h6v5l-2 4h6v5h-6-4zm-196 57v-1h4z"/>
-		<path id="Path 15" fill-rule="evenodd" class="s15" d="m195 267l4-2 10 2v10h23l1 4 12 2-4 3h-5v3l5 1 4 1v9h-4l-2 5h-7v4h-18l-3 3 1 10-3 6-8 1h-6l-5-1v-4l-9-5v-3l-4-1-5-1v-4h-7v-1l2-4h5v-10h4v-4l10-6v-6l5-7h4zm74 30l-18 3 3-8-4-2v-5h23l1-4h13v9l5 1v4h5v5h4v8l5 2 1 9v5h-15l-1 5h-8v4h-5l-1 5h-8l-6-10 1-18 5-1 2-5 3-6zm33-2h4v5h-4zm-189 61l1-4v5l4-1 4 3 1 7 9 7v7l-14 10-5 9h-4l-17 1 2-10h1l4-1v-8l5-3-1-6 1-8v7h4v-9h5z"/>
-		<path id="Path 16" class="s1" d="m273 58h-9 1z"/>
-		<path id="Path 17" class="s3" d="m274 78h4v4l-9 5v-5z"/>
-		<path id="Path 18" class="s5" d="m297 167v-9h5l-1 9zm0 5h-9v-5h9z"/>
-		<path id="Path 19" class="s6" d="m297 172v-5h4v4z"/>
-		<path id="Path 20" class="s7" d="m224 233l7 1v4h-8zm-93 119v5h-4v-5zm9 10h-4v-5l4 1z"/>
-		<path id="Path 21" class="s8" d="m104 414v4h-5v-4z"/>
-		<path id="Path 22" class="s12" d="m148 366h5v5h-5z"/>
-	</g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140">
+  <defs>
+    <radialGradient id="playerShadow" cx="50%" cy="55%" r="55%">
+      <stop offset="0%" stop-color="#000" stop-opacity=".35"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="skinShade" x1="40%" y1="15%" x2="70%" y2="85%">
+      <stop offset="0%" stop-color="#f9d29f"/>
+      <stop offset="100%" stop-color="#d69255"/>
+    </linearGradient>
+    <linearGradient id="kitBlue" x1="30%" y1="20%" x2="65%" y2="90%">
+      <stop offset="0%" stop-color="#3f9bff"/>
+      <stop offset="100%" stop-color="#0057d8"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="74" cy="118" rx="36" ry="16" fill="url(#playerShadow)" opacity=".55"/>
+  <g stroke="#0e0e0e" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">
+    <path fill="url(#kitBlue)" d="M86.5 66.5c6.3 6.4 3.1 16.2-1.3 25.8l-6.7 13.9-15 .2-6.6-16.1C51.1 77 48 68 56 60.4l18.8-5.5z"/>
+    <path fill="#ffffff" d="M59 41.6c9.2-4 23.1-3.8 29.6 3.4 6.4 7.2 5.6 20.8.2 27.5-5.4 6.7-15.5 4.5-26.4 1.6-10.9-3-17.5-13.7-12.4-21.9 2.2-3.4 4.9-8 9-10.6z"/>
+    <path fill="#d83535" d="M58.5 40.9l8.3-3.3 7.1 1.2-9.4 38.9-6.4-1.8z" opacity=".9"/>
+    <path fill="#d83535" d="M79 39.9l7.7 3.6-7.8 34.7-7.2-1.8z" opacity=".92"/>
+    <path fill="#00a38d" d="M95 32.6c4.3 3.5 4.6 10.9.7 14.5-3.9 3.6-9.3-1-12.2-4.8l-.1-.1c-2.7-3.3-1.8-8.5 1.9-10.8 3.4-2.3 7.4-1.5 9.7 1.2z"/>
+    <path fill="url(#skinShade)" d="M44.4 67.3c-5 2.4-9.8-2.9-9.4-8.2.3-3.4 2.6-5.7 6-6.2l7.7-.9 8 9.6-4.6 4.8c-1.9 2-4.6 2.9-7.7.9z"/>
+    <path fill="url(#skinShade)" d="M95.8 69.6c5.3 2.1 10.2-3.5 9.4-9-.5-3.3-2.8-5.6-6.3-5.8l-8-.4-7.3 10.3 5.1 4.3c2.1 1.8 4.8 2.5 7.1.6z"/>
+    <path fill="#212121" d="M74.2 21.4c7 0 13.2 3.5 15.9 7.9 2.7 4.4 1.4 10-2.8 13.3-4.2 3.3-10.9 4.2-17.3 2.1-6.3-2.1-11.2-7.2-10.7-12.5.6-5.3 7.9-10.8 14.9-10.8z"/>
+    <rect x="56.5" y="29.7" width="35.4" height="6.1" fill="#ffffff" rx="2.7"/>
+    <circle cx="73.8" cy="44.2" r="13.6" fill="url(#skinShade)"/>
+    <path fill="#303030" d="M69.9 44.3c1.9 1.1 1.4 3.4-.7 3.3-1.7-.1-3.2-1.6-3.1-2.9.1-1.5 2.4-2.1 3.8-.4z"/>
+    <path fill="#303030" d="M81.9 44.1c-1.8 1.2-1.1 3.5.8 3.3 1.7-.2 3-1.8 2.7-3.1-.3-1.4-2.6-1.7-3.5-.2z"/>
+    <path fill="#7a3d16" d="M74.3 53.6c3 0 5.6-1.2 7.2-2.4.6-.5.2-1.6-.6-1.6H67.8c-.8 0-1.2 1.1-.6 1.6 1.6 1.2 4.3 2.4 7.1 2.4z" opacity=".6"/>
+    <path fill="#f9d29f" d="M61.4 90.1l-6.1 13.7c-1.6 3.6 1.7 7.4 5.4 6.4l4.9-1.3c2.5-.7 4-3.3 3.1-5.8l-4.5-12.7z"/>
+    <path fill="#f9d29f" d="M91.4 90.5l9.1 10.5c2.6 3-.2 7.8-3.9 7.5l-5 -.4c-2.6-.2-4.6-2.4-4.4-4.9l1.1-12.2z"/>
+    <path fill="url(#kitBlue)" d="M69.3 90l-6.6 17 13.8-.2 4.7-17z"/>
+    <path fill="#ffffff" d="M54.4 102.9l8.5-2.3 1.6 4.9-8.2 2.3c-2.8.8-5-1.9-4-4.2.3-.8 1-1.4 2.1-1.7z"/>
+    <path fill="#ffffff" d="M93.4 102l-5.4-1.1-1.5 5.4 5 1c2.5.5 4.8-2.1 3.8-4.3-.5-1-1.4-1.7-2.4-2z"/>
+    <path fill="#0057d8" d="M58.6 95.3l12.8-5.3 13.6 5.5-3.5 6.6-18.9-.1z" opacity=".65"/>
+    <path fill="#ffffff" d="M87.1 105.8l-14.2-.1-14.4-.1c.8 3.9 5.2 7.4 14.2 7.4 8.8 0 13.3-3.6 14.4-7.2z" opacity=".5"/>
+    <g fill="#ffffff">
+      <path d="M38.6 56.3c-1.2 4.5 2.8 9.2 7.2 9 4-.1 6.5-3.6 4.7-6.6-1.1-1.8-3.2-3.3-5.7-4.5l-5.5.9z" opacity=".35"/>
+      <path d="M104.5 57.2c1.5 4.4-2.1 9.3-6.6 9.4-4.1.2-7-3.1-5.5-6.3 1-2 3-3.6 5.4-5zm0 0" opacity=".35"/>
+    </g>
+    <g fill="#ffffff" stroke-width="1.2">
+      <circle cx="46.2" cy="104.5" r="10.8"/>
+      <circle cx="46.2" cy="104.5" r="6.8" fill="#1d1d1d"/>
+      <circle cx="46.2" cy="104.5" r="3.4" fill="#ffffff"/>
+    </g>
+    <path fill="#1b1b1b" d="M39.4 101.4l8.5-4.4c2.5-1.3 5.4-.5 7.1 1.6l5.1 6.7-11.4 5.5-9.5-6.7c-1.6-1.1-1.4-3.3.2-4.7z" opacity=".35"/>
+  </g>
 </svg>
 `.trim();
 
   const ENEMY_IMAGE_SVG = /* html */ `
-<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
-	<style>
-		.s0 { opacity: .19;fill: #b3afaa } 
-		.s1 { opacity: .49;fill: #6f6760 } 
-		.s2 { opacity: .71;fill: #302f2e } 
-		.s3 { opacity: .73;fill: #4b504d } 
-		.s4 { opacity: .99;fill: #0a090b } 
-		.s5 { opacity: .99;fill: #73735d } 
-		.s6 { opacity: 1;fill: #64321f } 
-		.s7 { opacity: 1;fill: #9ea9aa } 
-		.s8 { opacity: 1;fill: #194768 } 
-		.s9 { opacity: 1;fill: #262422 } 
-		.s10 { opacity: 1;fill: #c4cbcf } 
-		.s11 { opacity: 1;fill: #92583d } 
-		.s12 { opacity: 1;fill: #dccd4a } 
-		.s13 { opacity: 1;fill: #fcfdfd } 
-		.s14 { opacity: 1;fill: #bb8f13 } 
-		.s15 { opacity: 1;fill: #0765b8 } 
-		.s16 { opacity: 1;fill: #f6ce13 } 
-		.s17 { opacity: 1;fill: #2a70a3 } 
-		.s18 { fill: #044986 } 
-	</style>
-	<g id="Background">
-		<path id="Path 0" fill-rule="evenodd" class="s0" d="m402 47v-1h15v1zm12 27v-4h8l-7 1zm-12 4v-4h12l-11 1v3zm-55 11l1-3v3zm-19 5l7-1 1-3v4zm-39 86v-20h8l-7 1v18l3 1zm-172 62v-4h12l-11 1zm94 4l-1-7-3-1h4zm-117 0h11v-4h12l-11 1v4h-12zm121 8l-1-7-3-1h4zm113 0h-12v-8h1v7zm0 4v-4l1 3 18 1zm28 7l-1-3-7-1h8zm0 1v-1h8v4h-1v-3zm-79 66v-4h16v1h-15zm55-3v-1h8zm-192 22l2-4v1l-1 3zm48 12h3v-5h1v6h-4zm191 8l-1-7-3-1h4zm4 8l-1-7-3-1h4zm7 20h-4l1-19v18zm-367 4v-5h1v4l3 1zm371 0h-4v-4zm55 11v-12h1v12zm-43-7h-12v-4l1 3zm39 11v-4h4zm-344 8v-7h1v7zm12 0v-3l1 3z"/>
-		<path id="Path 1" class="s1" d="m417 46h1v1h-1zm-15 4v-3h1zm-86 55v-4h8v1h-7zm-8 4v-4h8l-7 1zm-160 74v-4h8v1h-7zm-4 4v-4h4zm-8 8v-4h4zm13 28v-1h15zm-8 4l7-1 1-3v4zm-8 4l7-1v-3h1v4zm230 39v-1h1l7 1zm-145 11v-4h4l-3-4h4v5h-4zm-4 4l2-4-1 4zm-61 51l3-1v1zm-11 11l11-11v4l-1 1-3-1v4h-4v4h-3zm-13 13l3-1v-4h4v-4h4 1v1h-4v4h-4v3 1zm-1 3l1-3v3zm-58 24h-4l1-16v15zm4 8h-4v-8l1 7zm77-5l1-3h1l-2 4z"/>
-		<path id="Path 2" fill-rule="evenodd" class="s2" d="m386 62l4-8 7 1h-6v4zm-39 63v-4l8-3 16-17 8-1-7 2-4 8h-4v4h-4v4h-4v4h-8zm-167 4l-1-11-3-1h4zm81-8l2-4-1 4zm60 16l7-4h1v4zm-157 35v-4h3l5-8v8l-7 4zm-78 51l7-1v-4h4v-4h4l1-3v4l-5 8zm78-8h8v4h-7l-1 3zm145 27l-4-4v-8h4v8l8 4v4h-1v-3h-3zm-99 47v-4h5l-1 4zm173 8v-4l8 3 4 16h4v16l-1-15h-4l-3-1v-3l-4-8v-4zm-197 15l1-4h4v-6h1v6l-1 4-4 1zm170 27l-1-10h-4l1-10v9l3-1 1 1zm-17-15l4-4h4l-7 8h-1zm36 32h-4v-4h-4l-4-8h4l5 8h3zm-161-8l9-1v1l1 3h17l1-4h8l-7 1v4h-21v-4zm188 7v-7l-3-1h8v16l-1-9zm-226 20v-4l8-4v-4h4v1l-4 8zm-4 4v-4h4v4zm-20 8v-4h8v-4h12v4h-11l-1 4zm-16 11l8-8h7v1h-6l-4 8h-4v4h-4v-1h3zm306 0l-8-8 8 4zm-344 20l-12-13 12 9z"/>
-		<path id="Path 3" class="s3" d="m24 398h7v8l-4 1v-4l-3-1z"/>
-		<path id="Path 4" fill-rule="evenodd" class="s4" d="m402 50l1-3h14 1l4 8h4v11h-4v4h-8v4h-8v-7l-9-8h-6v-4h6zm-215 24h8l7-8 9 4 1-4h10l1 4-6 10-14-1 2 15 17-2 15 2 2-8-12-4 5-12h6v4h8v4h4v8h4v16h4v3h-4v16h7 1l-5 8h-3v4h-4v4h-4v-20h-8l-1 4-6 4-4-15-4-1-1-4-25 5-10 1v9l5 1 7 4v3 5 3h-3l-1-7h-4v7l-2 12-2-19h-7v-12h-4v-4h-4v-4l-8-4v-3h4v-4l-4-1v-7l8-4 3 8h6l3-7-8-5 4-8zm168 11l1-3h7l1-4h7v-4h5l2 12h19l5-8h1 7v4h4v8h-4v4h-27v3h-4l-4-7h-4v-8l-4 1v3h-11l-1 4h-7v-1-3zm-27 12v-3h8v4h-8zm-12 8l1-3h7l-4 7-14 4h-5-4v4h-6-2-7l-1 4h-3-8-8l1-4h18l1-4h7v-3l19-1 1-3zm-11 17l1-4h3v7l4 3v6h-4v-4l-4-1zm-102 6v-3h8v-4h15v4h-5l-2 4h-4v7l-4 1v-4l-1-4zm125 5l4-8h8l-4 8h-7zm-90 7v-3h4 4v3l-1 4zm8 16v-10l4-1v4 8zm59-4l3-4 4 4zm-113 3v-6h3v7zm97 5v-3l7-1 1-4h8l-1 4h-7v4zm-109 0v-4h11v4h-3zm15-2l4-1v7h-4v-4zm-23 6v-4h8v4zm113 7v-10l4-1v20l-4-1zm-70 1h-12v-4h23l2 4h10l-1 4h-10l-1-4zm74 12v-4h4v8h-3zm3 24l1-20h4v23h-4zm-175-1v-4l16-4-4 8zm67 0h3l1-4h3l4 5v6l5 2v6h3v4h-4l-8-15h-11v4h-8v-5zm-74 3v-3h7v4zm-8 5v-4h7v4zm199 7h-4v-11h4zm-150-5l2-2 7 4h4v3h-15zm-65 9v-3h8v3zm31 12l2-4h5l9-7h7v3l-7 1-4 7zm90-4h-4v-7h4zm-132-3l6-1h1v4l-4 2-22 2-6 14-11-2v-4h4l4-8h8v-4h19zm132 7v-4l4 1v3zm-113 8l1-4h9l2-4h11v4h-12v4zm117 0v-8l8 4v11l4 2v7 11h-4l-1-19h-3v-8zm-129 8l-1-15h5v7h8v1l-1 3h-7v4zm231-7v-4h3v3 8h12v4h-22-4l-2 4h-14l-2 4h-6l-4 4h-9-7l-2 4h-17l-1-1v-3h19l1-4 27-4v-4h15l1-4h12zm-266 19l-1 4h-10l-1-4-4-1v-10l4-1v5l5 6zm277 7l4-7 8-1v-3h-7l-1-4h19l1 3 7 1 1 3v1h-20l-1 4h-6l-1 3zm-261-11l4-1 2 4 5 1-1 4h-9zm308 11h-8v-3h8zm4 5l-4-1v-4h1l3 1zm4 15v-8h4v8h-2zm-176 0v-4h7 1v4zm-8 4l1-4h7l-2 4zm117 9v-10h4l1 20h14l2-4h18l1-4 3 1v7 5 6l-3 1v-9l-1-3h-4v4h-4l-1-4h-8l-2 4h-11l-1 4h4l1 4h7v1 3h-39v-3-1h26l-6-8zm-121-5v-4h4l1 4h5l20 3 6 8-12-3h-7l-1-4h-12v3h-3v-6zm-11 15l2-4h4l1 1v3zm215 16v-19h3l1 15h2l1 17v2h-3l-1-15zm-219-13v-3h3 1l-1 4h-3zm101 9l1-4h14l1 4zm55 0l1-4h6v4zm-172 4v-4h8v4h-4zm113 0v-3l4-1v4zm83 7v-11h3v12zm-114-6v10l6 1 2-4h7l1-4h6l2-4h7v4h-7l-1 4h-7l-1 4h-7v3h-8l-1 4h-17l-1-3h14l1-8h-4l4-7zm-33 15v-4l25-4-1 4h-10v3l-9 1zm154-4h-3v-4h3zm39 11l4-1 1 9h3v12h4v3l-8-1v-10h-4zm-214 8l1-7 2 2v5zm187 0v-7h4v7zm4 8v-8l4 1v7zm-312 0h3l1-4h10v8l13 9v5l16 17 13 4 3-8h7v1 3h-4l-1 8-3 1-4 7-8 1v3h-11v-7l-1-1h-3v-4l-12-9v-3h-8v-3l-4-2v-2l-3-1-1-7-3-1zm54 4v-8h4v1 7zm-1 5l-5-1-2-4h8zm267 0v-1h4v4l7 4 4 1v6l21 20h20l3-12h3v12h-4v4h-4v4h-19v-4h-8v-4h-4l-4-7-11-1-1-3-4-4-3-1zm-243 10v-3h8l-1 3zm-11 12v-4h3v4z"/>
-		<path id="Path 5" fill-rule="evenodd" class="s5" d="m269 125l1-1 6 1 2 18-2-14h-5l-7 8v-4zm-19 12v-4h4l8 6-5 5zm-78 31v-4h8l1 4v4l-5 6-4-2v-4l3-1zm-8 9l1-2 3 1v4h-4zm15 9v-6l1 6zm87 10l8-4-1 4zm-8 4l8-4-1 4zm-90 0l-4-3h1zm36 0l-4-1h10zm46 5l1-3 7-1zm-8 4l1-3 7-1zm27 10l4-1-3 4h-1zm-144 144h7l-7 5z"/>
-		<path id="Path 6" class="s6" d="m313 128l7-3 6-11 21-1 2-4h5l17-19h4l4 7h4l-4 3-8 1-16 17-8 3v4h-7-8l-4 8-7 4h-1l-7-3zm-121-7l-5-1v-9l10-1-5 4zm45 0l1-4h8v20h-4l-4-6zm-38 12v-5h4l7 1 1 4zm-8 3l4 1v-8l1 7h3v6l7 2 5 8h-8v4 4h4l2 4h12l13-13v-9l4-2 7 4 1-4h4v5l-4 1v10 8h-4-4v8h-10l-2-4h-23-4v-4-7l-4 1v-2-7h-3v6h-1l-2-7zm-105 103l10-1 2-4h10l2-4h6l14-16 15-2 6 5-2 5v1l-1 3-7 1h-1-7l-9 7h-5l-2 4h-11l-2 4h-9l-1 4h-8zm233 42l1-6 4-2h4l-3 5 2 14 27 5 5 5-7 3v3l-1 4h-18l-2 4h-14l-1-20v-5l4-3zm60 4h-4v-4h4zm-187 59l8-4h9l3-4h9l5-5v-10l-11-12 12 3 8 8 3 13-4 7-25 4v4l-2 4h-11l-4 6h-1l-2-2v-1l3-7z"/>
-		<path id="Path 7" class="s7" d="m207 160h-4v-4h2 10zm148 149h8v3h7l-9 4h-6zm0 12l6-1h5l-3 1v6l4 1v8l8 4v4h4v8h4l4 15 4 1v7l4 1v3h7l-4 8-7-4v-4h-4v-7l-4-1v-7l-4-1v-7h-4v-4h-3l-5-8h-4v-4h-3-1v-12h-3l-1-1zm-170 30h3v-3h4l-3 7zm-63 39h11v-3h7l5-8h7l1-4 15-4v-3l12-9v-4l4 1v7 4l-8 4v4h-4v4h-12v4h-8v4h-8v3l-8 8h-3v4h-7l-1-11z"/>
-		<path id="Path 8" class="s8" d="m257 129l5-8h8v3l-1 1h-7l-1 4h-3zm-11 11v-3h4l1 1-1 2zm-58 24v-4h3 4v4h-3zm-32 15l4-7h4 1v3l-1 2-8 3zm67-3h-8v-4h11l1 4h-1zm57 12l5-9 4 1v4l-8 4zm-101 4v-6h1l4 5v1zm9 11v-4h8l-5 4zm-36 4l1-4 3 2v4l4 2v8l-7-4zm4 128v-3h4v4l-3 1-1-1zm67 12v-3h10l1-4h4l-1 8h-14z"/>
-		<path id="Path 9" class="s9" d="m386 62l5-3h6l9 8v7h-4v4l-5 8h-19l-2-12h2l1-8zm-199 12l5-8h10l-7 8zm45-4l-5 12 12 4-2 8-15-2-17 2-2-15 14 1 6-10-1-4h8zm-60 16v-4h4l8 5-3 7h-6zm165 4l10-1h1v1l-1 4h-11v-4zm-13 11v-3h4v4h-4zm-15 37v-4h4l7 3-3 11-5 4-4-4zm-94 15l4-1v4h-4zm23 19v-8h4v8zm-90 11l1-3h7v4h-7l-4 8h-4v7l11 8 1 8-2 2-6-5-4-12-8-1v-3l3-1 4-4 1-4h3zm153 47v-7h4v7zm-262 20l11 2 6-14 22-2 3 3 1 15-1 4h-3v8h-4l-5-1-2-4v-3h-8l-1 4h-7l-1 4h-3l-7-1-5-6v-5-4zm324 20h-6l-1-4h7v3zm-140 8v-5h15l1 1-1 3zm89 18l4-14 3-1 1 7-4 3v5zm-140 28v-4h4v4zm66 9l-3-13h3v4l4 9zm-70-5v-4h3 1v4zm-15 12v-4h3l1 1v3zm-4 4v-4l3 1v3zm-4 4v-4h4l-1 4zm-4 3l1-3h3l-1 4h-3zm-4 5v-4h4l-1 4zm-4 3v-3h4v3zm-4 4v-3h4l-1 3zm-3 39l-3 8-13-4-16-17v-5l-13-9v-8h9v4h8v4h15l2 4 5 1 2 10 3 1zm257-23v-8l4 1v7zm19 0l4-2 8 1 4 1v4l16 4v3l8 8h3l1 4-3 12h-20l-21-20v-6l-4-1z"/>
-		<path id="Path 10" fill-rule="evenodd" class="s10" d="m203 156v-4h8v1h-5l-1 3zm188 156l-1-3h1zm4 20l-1-19h1z"/>
-		<path id="Path 11" fill-rule="evenodd" class="s11" d="m348 90h7l1-4h11v-3l4-1v8l-17 19h-5l-2 4-21 1-6 11-7 3-4-3v-7h-3v-5l14-4 4-7h4v-4h8v-4h11zm-24 8l4-1v1zm-127 12l25-5 1 4 4 1 4 15 6-4 1 10 4 6h-4v3l-4 2v9l-13 13h-12l-2-4 8-4h4v-4l-4 1h-4v-1l-5-8-7-2v-9h12v4l4-1h4v-7l2-4h5v-4h-15v4h-8v3h-4v-3l-7-4v-7zm-6 45h1l3 1v4h-4zm-74 52h12l4-8 8 1 4 12-15 2-14 16h-6l-2 4h-10l-2 4-10 1h-5l-3-3 4-2v-8h12v-3h3l5-8h7v-4l1-1 7 1zm82 19h4v-4h7l-3 5h-4zm129 47l1-3h6l1-4h20l1 4h6v3h8v4l4 1v7h4v8h-7l-13 9-5-5-27-5-2-14zm-136 35h3v-3h12l1 4h7l11 12v10l-5 5h-9l-3 4h-9l-8 4h-3l-9-12h-4v-4h-4v-4h4v-4h3l1-4h7v-3l4-1zm-13 8v-4h3l-2 4zm-8 8l1-4v4z"/>
-		<path id="Path 12" class="s12" d="m297 117v-4h4v6zm-5 12l-3-1v-11h2zm-22-5v-3h8l-2 4zm-12 5h3l1-4h7l-5 8h-5zm-77 39l-1-4h8 4v4zm58 16v-4h3 4v4zm-28 38l2-3v3z"/>
-		<path id="Path 13" class="s13" d="m191 136v-7h4v8zm24 0v-7h4v7zm-10 20l1-3h5 4v3zm158 153h4l1-4h6l7-8h2 4v4h-4l-4 7h-7l-2 4h-7zm3 11l1-3 12-1 4-7h7l1 3 3 1 1 19h3l1 15 3 1v7 12h4v10l-4 2h-7v-3l-4-1v-7l-4-1-4-15h-4v-8h-4v-4l-8-4v-8l-4-1v-6zm-199 16h-3v-4h4 8v4h4l4 8h4v4 3h-3l-1-3h-4v-4h-4v-4h-4v-4zm-15 5l1-1h4 10l13 15v4l-12 9v3l-15 4-1 4h-7l-5 8h-7v3h-11l-2-10 1-5h4v-7l7-5 1-3v-1h4v-3h3l1-4h3l1-4h3l1-4h3z"/>
-		<path id="Path 14" class="s14" d="m296 141l9-6 4 3-1 10-3 4h-8zm-104 27v-4h3 4v4zm7 4v-4h4v4h12v4h8l-2 4h-16zm82 16l8-4 1 4h3l-1 20-5-1-6 6zm-97 4v-1l4 4h7l1 4h-8v4l-1 4h-3zm-28 13l7 2 5-4 4 7v5h-8v4h-4v-8l-4-2zm57 17l7 8h17l3-4h6l2-4h9l3-4 9 1v3h-6l-2 4h-10l-1 4-14 4-2 4h-10l-5 4-8-4v-3l-4-1v-7l3-5h1zm96 20h-10l2-12h4v8zm-51 8v-3l4-1-1 4zm27 8l1-4h5l3-4h17l2-3v7h-12l-1 4zm-35-4l1-4h7l-1 4zm-27 8l14-4 1-4h12l-4 6 1 4 18-2 1-4h19v4l-27 4-1 4h-19v3h-15z"/>
-		<path id="Path 15" class="s15" d="m278 121h3l1-4h7v11l3 1 2 12-2 3-11 1-3-2-2-18zm-36 43h4v-8l4 1-4 15h-4zm4 16l15-4 5-8h7l1-4h3l8 7v8l-5 9-6 4-8 4-8 4v1l-7 1-1 3-7 1-1 3-10 2-3 4h-6l-10-4-9-11 6-1 9-7h10l2-4h6l2-4h7zm-81-8l7-4 3 3-3 1v4l4 2 3 2v6 6l-14 5h-1v-5l-8-8v-4l8-3v3h4v-4l-3-1zm-13 35l-11-8v-7h4l8 11zm129 6l6-6 5 1 1 3 1 19-1 4-8 1-9-6-1-6-5-1 3-4 1-2 7-2zm-7 57l1 11h9l10-12 11-5 1-6h22l1 4h7v3l-8 1-4 7-4 2-1 6-3 1-4 14v10l-10 2-5-4h-39l-1 15-4 5h-15v-4h-3l-8-8-6-8-20-3v-4l2-4h8v-4h3 16l3-4h9l4-7 14-1 5-7zm85 32l13-9h7 2v4l-7 8h-6l-1 4h-4-8l-3-1v-3zm11 10l2-4h7l4-7h4l4 8h-1-7l-4 7-12 1-1 3h-5v-4zm-202 20v-4h4 4v4zm-1 8v-4h5v4h4v4h4v4h4l1 3 4 4v1l-1 7h-4v-7l-4-1z"/>
-		<path id="Path 16" class="s16" d="m292 129l-1-12h6l4 2 4 3v7 6l-9 6h-2zm-28 8l7-8h5l2 14 3 2 1 13-5 6h-3l-1 4h-7l-5 8-15 4h-4v-8h4l4-15v-8l7-5 5-5zm-88 41l5-6h18l6 8h16l2-4h3l1 4h12v4l-2 4h-6l-2 4h-10l-9 7h-10-4l-1-4h-7l-4-4-4-5-1-6zm-31 14l4-8h7l8 8v5l4 3v3l-5 4-7-2-3-2zm129 0l6-4h1v25 1l-7 2-1 2-4 1-9-1-3 4h-9l-2 4h-6l-3 4h-17l-7-8v-3h9l1-4h6l3-4 10-2 8-4 8-4v-1h7l1-4h7zm11 43l8-1 1-4h7l-2 12h10l4 1v4l-2 3h-17l-3 4h-5l-1 4h-19l-1 4-18 2-1-4 4-6h7l1-4h3l1-4h3l1-4h11l1-4h7z"/>
-		<path id="Path 17" class="s17" d="m301 119v-6h5v5l-1 4zm-47 14v-4h3 1l1 4h5v4l-2 2zm-4 7l1-2 6 6-7 5v-4zm-70 24v-4h8v4zm1 8v-4h11 7v4zm46 4h10l1-4h4v8h-3-12l-1-4zm-70 161l3-1v-4h4v4h3v4h-10zm31 11v-4h-4l-4-8h-4v-4h4l9 12h3v4z"/>
-		<path id="Path 18" class="s18" d="m305 135v-6l4 1v4 4zm-24 10l11-1 2-3h2l1 11-1 4-7 1v3l-4 1v10l-8-7 5-6zm-116 52l14-5h5v15l-12 3-4-7v-3zm26 6l5-4h4l4 1 9 11 10 4-1 4h-9l-2 3h-1-7-3v-6l-5-2v-6zm103 27l-1-19h4v11h4v1 7zm-75 12l5-4h10l2-4 14-4 1-4h10l2-4h6 1l5 1 1 6 9 6v3h-7l-1 4h-11l-1 4h-3l-4 1v3h-7l-1 4h-12l-1 4-14 4v-7l-4-2zm55 28l4-4h6l2-4h14l2-4h4l-1 6-11 5-10 12h-9zm-35 4h17l2-4h7l-5 7-14 1-4 7h-9l-3 4h-16l1-4 1-4h2l1-3h4l15-1zm142 23v-4h2v4zm-180 4h-5l-1-4h6zm37 23h15l4-5 1-15h39l5 4 10-2 1 14 6 8h-26l-1-4h-14l-1 4-4 1v3h-7l-2 4h-6l-1 4h-7l-2 4-6-1v-10zm94 4h-7l-1-4h-4l1-4h11l2-4h8l1 4-4 4h-6zm23-7v-5h6v4z"/>
-		<path id="Path 19" class="s0" d="m120 319h1v1h-1zm1 9v-8h4l-3 1zm-27 12l8-1-1 5v-4zm-44 7v-4l9 1h-1-7zm13 8v5h-13v-4h-4l1-8v7h4v4h11v-4zm46 4h4v-4l1 5zm82 23h5v9h-5zm-12 4h5v5h-5zm36 0h4v5h-5zm-153 32v-7l-7-1h6 2v8zm71-3l7-1v-3h1v4zm23 3v-4h7l-6 1z"/>
-		<path id="Path 20" fill-rule="evenodd" class="s1" d="m59 316h4v5l-8 4-1-5 3-1h1zm19 16l5 4v4h-5zm-19 19l-1-7h1zm3 4l-3-4h4v4zm27 0h5v5h-5zm20 4v-4h4v4zm98 12l-8 1v-9h5v4l-4-3v7zm-20 27h5v4h4v5h-5v-4h-4zm-43 12v-3l1 3zm-4 1l2-1-1 1z"/>
-		<path id="Path 21" class="s2" d="m101 418h1v1h-1z"/>
-		<path id="Path 22" class="s3" d="m58 402v-4h3l-2 4z"/>
-		<path id="Path 23" class="s5" d="m121 319v-3l4-1v5h-4zm-26 25l-1-4h7v4z"/>
-		<path id="Path 24" class="s6" d="m55 410v-8h3 1l2 8zm8 8v-8h8 4l4 8h7v4h-19zm78-7l1-1h2 1l4 8v4h-8v-7z"/>
-		<path id="Path 25" class="s7" d="m254 129h-4v-4h4z"/>
-		<path id="Path 26" class="s11" d="m191 301h1v1h-1zm-74 27v-8h3 1v8zm-39 8h-8v-4h8zm-28 11l1-3h7l1 7 3 4v4h-11v-4h-4v-7zm157 24h-7v-7l4 3h3zm-172 15v-11h3l1-4h8v7h4v4l3 2v7h-11l-1-4zm24 16l2-4h6v8h4v4h-8-2zm85 5l11-9 9 1v14l-1 1h-7v4h-7l-4-8zm-11 15v-7h8v7zm-66 0h-9v-4h4 1z"/>
-		<path id="Path 27" class="s0" d="m57 319h1v1h-1z"/>
-		<path id="Path 28" class="s5" d="m192 383h3v7h-3z"/>
-	</g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="enemyGlow" cx="50%" cy="45%" r="70%">
+      <stop offset="0%" stop-color="#ffb774" stop-opacity=".9"/>
+      <stop offset="70%" stop-color="#521818" stop-opacity=".4"/>
+      <stop offset="100%" stop-color="#200404" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="enemyBody" x1="25%" y1="15%" x2="75%" y2="90%">
+      <stop offset="0%" stop-color="#ffd1a6"/>
+      <stop offset="50%" stop-color="#ff7f4d"/>
+      <stop offset="100%" stop-color="#b2101c"/>
+    </linearGradient>
+  </defs>
+  <circle cx="64" cy="64" r="60" fill="url(#enemyGlow)"/>
+  <ellipse cx="64" cy="70" rx="42" ry="34" fill="url(#enemyBody)"/>
+  <ellipse cx="64" cy="94" rx="32" ry="12" fill="#2f0303" opacity=".55"/>
+  <path fill="#ff5d3b" d="M40 72c0-18 14-36 32-36s32 18 32 36-14 32-32 32-32-14-32-32z" opacity=".82"/>
+  <path fill="#ff9c66" d="M50 40c8-8 26-10 36 2s12 34 2 44-28 14-38 2-10-30 0-48z" opacity=".45"/>
+  <circle cx="52" cy="60" r="6" fill="#fff4e9"/>
+  <circle cx="80" cy="62" r="5" fill="#ffe6db" opacity=".9"/>
+  <path fill="#300" d="M48 82c8 4 18 6 32 0 4 10-8 18-20 18s-20-8-12-18z" opacity=".4"/>
 </svg>
 `.trim();
 
@@ -1370,6 +941,4 @@
 
         requestAnimationFrame(loop);
       })();
-    </script>
-  </body>
-</html>
+    
